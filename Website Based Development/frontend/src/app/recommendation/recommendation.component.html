@@ -1,0 +1,217 @@
+<!-- Main list view for Recommendation Items -->
+<div
+  *ngIf="
+    recommendationParams &&
+      recommendationParams.selectedKeyword &&
+      recommendationParams.selectedKeyword.length > 2 &&
+      itemsInWishlist >= 2;
+    else needMoreData
+  "
+  class="mt-3"
+>
+  <h2>User Portait Predict</h2>
+  <table class="table-dark table-striped table-hover">
+    <tr>
+      <th>Preferred Keyword</th>
+      <td>{{ recommendationParams?.selectedKeyword }}</td>
+    </tr>
+    <tr>
+      <th>Accpeted Max Price</th>
+      <td>{{ recommendationParams.maxPrice | currency }}</td>
+    </tr>
+    <tr>
+      <th>Accepted Min Price</th>
+      <td>{{ recommendationParams.minPrice | currency }}</td>
+    </tr>
+    <tr>
+      <th>Maximum Preferred Shipping Cost</th>
+      <td>{{ recommendationParams.maxShippingCost | currency }}</td>
+    </tr>
+    <tr>
+      <th>Only Prefer Free Shipping</th>
+      <td>
+        <span
+          [class.text-success]="recommendationParams.allFreeShipping"
+          [class.text-danger]="!recommendationParams.allFreeShipping"
+          ><i class="material-icons">{{
+            recommendationParams.allFreeShipping ? "check" : "close"
+          }}</i></span
+        >
+      </td>
+    </tr>
+    <tr>
+      <th>Prefer Paid Shipping</th>
+
+      <td>
+        <span
+          [class.text-success]="recommendationParams.allPaidShipping"
+          [class.text-danger]="!recommendationParams.allPaidShipping"
+        >
+          <i class="material-icons">{{
+            recommendationParams.allPaidShipping ? "check" : "close"
+          }}</i>
+        </span>
+      </td>
+    </tr>
+    <tr>
+      <th>Only Prefer Item Can Be Returned</th>
+      <td>
+        <span
+          [class.text-success]="recommendationParams.allAcceptReturns"
+          [class.text-danger]="!recommendationParams.allAcceptReturns"
+        >
+          <i class="material-icons">{{
+            recommendationParams.allAcceptReturns ? "check" : "close"
+          }}</i>
+        </span>
+      </td>
+    </tr>
+  </table>
+</div>
+<ng-template #needMoreData>
+  <div
+    *ngIf="
+      !recommendationParams ||
+      recommendationParams.selectedKeyword ||
+      recommendationParams.selectedKeyword.length <= 2 ||
+      itemsInWishlist < 2
+    "
+    class="alert alert-warning mt-3"
+  >
+    Need More Wishlist Data
+  </div>
+</ng-template>
+
+<div
+  *ngIf="
+    recommendationItems &&
+      recommendationItems.length > 0 &&
+      itemsInWishlist >= 2;
+    else noRecords
+  "
+  class="mx-auto"
+>
+  <!-- Details button -->
+  <div class="d-flex justify-content-end mb-2">
+    <button
+      class="btn btn-light detail-button"
+      [disabled]="!selectedItem"
+      (click)="(showDetails)"
+      style="color: black; border: none"
+    >
+      Detail <span class="material-icons">chevron_right</span>
+    </button>
+  </div>
+  <div class="table-responsive">
+    <table class="table-dark table-striped table-hover">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Image</th>
+          <th>Title</th>
+          <th>Price</th>
+          <th>Shipping Option</th>
+          <th>Return Acceptance</th>
+          <th>Favorite</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let item of recommendationItems; let i = index"
+          (click)="setSelectedItem(item)"
+          [class.selected-row]="selectedItem?.itemId[0] === item.itemId[0]"
+        >
+          <td>{{ i + 1 }}</td>
+          <td>
+            <a
+              *ngIf="item.galleryURL && item.galleryURL[0]"
+              [href]="item.galleryURL[0]"
+              target="_blank"
+            >
+              <img
+                [src]="item.galleryURL[0]"
+                alt="Item image"
+                class="img-fluid"
+                (click)="$event.stopPropagation()"
+                style="max-width: 100px"
+              />
+            </a>
+            <span *ngIf="!item.galleryURL">N/A</span>
+          </td>
+          <td>
+            <a
+              href="javascript:void(0)"
+              (click)="getSingleItem(item)"
+              [title]="item.title && item.title[0] ? item.title[0] : 'N/A'"
+              class="no-underline"
+            >
+              {{
+                truncateTitle(
+                  item.title && item.title[0] ? item.title[0] : "N/A"
+                )
+              }}
+            </a>
+          </td>
+          <td>
+            {{
+              item.sellingStatus &&
+              item.sellingStatus[0].currentPrice &&
+              item.sellingStatus[0].currentPrice[0].__value__
+                ? "$" + item.sellingStatus[0].currentPrice[0].__value__
+                : "N/A"
+            }}
+          </td>
+          <td>
+            {{
+              item.shippingInfo &&
+              item.shippingInfo[0].shippingServiceCost &&
+              item.shippingInfo[0].shippingServiceCost[0].__value__ === "0.0"
+                ? "Free Shipping"
+                : item.shippingInfo &&
+                  item.shippingInfo[0].shippingServiceCost &&
+                  item.shippingInfo[0].shippingServiceCost[0].__value__
+                ? "$" + item.shippingInfo[0].shippingServiceCost[0].__value__
+                : "N/A"
+            }}
+          </td>
+          <td>
+            <span
+              [class.text-success]="item.returnsAccepted[0] === 'true'"
+              [class.text-danger]="item.returnsAccepted[0] === 'false'"
+            >
+              <i class="material-icons">
+                {{ item.returnsAccepted[0] === "true" ? "check" : "close" }}
+              </i>
+            </span>
+          </td>
+          <td>
+            <button
+              [class.active]="item.isActive"
+              class="btn btn-outline-secondary"
+              style="background-color: white; border: none"
+              (click)="onAddOrRemoveFromCart(item, $event)"
+            >
+              <i class="material-icons" *ngIf="!item.isActive"
+                >add_shopping_cart</i
+              >
+              <i
+                class="material-icons"
+                *ngIf="item.isActive"
+                style="color: rgb(239, 186, 14)"
+                >remove_shopping_cart</i
+              >
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<ng-template #noRecords>
+  <div
+    *ngIf="!recommendationItems?.length || itemsInWishlist < 2"
+    class="alert alert-warning mt-3"
+  >
+    No Records.
+  </div>
+</ng-template>

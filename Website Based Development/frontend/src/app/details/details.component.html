@@ -1,0 +1,155 @@
+<div class="container">
+  <!-- Item title display -->
+  <div class="row justify-content-center" *ngIf="itemDetails?.Item.Title">
+    <!-- *ngIf 指令确保只有当 title 存在时才渲染此 div -->
+    <div class="col text-center">
+      <h3>{{ itemDetails.Item.Title }}</h3>
+      <!-- Bootstrap 样式类用于标题 -->
+    </div>
+  </div>
+  <!-- 1. Back to list button on the top left -->
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <button
+        class="btn btn-light list-button"
+        (click)="backToList()"
+        style="color: black"
+      >
+        <span class="material-icons">chevron_left </span> List
+      </button>
+      <!-- Updated style for Back to List button -->
+    </div>
+
+    <!-- 2. Wishlist and Facebook buttons, right aligned -->
+    <div class="col-md-6 d-flex justify-content-end">
+      <button
+        class="btn btn-primary btn-light"
+        (click)="shareOnFacebook()"
+        style="border: none; margin: none; padding: 0"
+      >
+        <img
+          src="assets/images/facebook.png"
+          alt="Facebook"
+          style="
+            width: 37px;
+            height: 37px;
+            display: block;
+            border: none;
+            margin: none;
+            padding: none;
+          "
+        />
+      </button>
+      <button
+        class="btn btn-secondary btn-light"
+        (click)="onAddOrRemoveFromCart()"
+        style="border: none"
+      >
+        <i class="material-icons" *ngIf="!inWishList" style="color: black"
+          >add_shopping_cart</i
+        >
+        <i
+          class="material-icons"
+          *ngIf="inWishList"
+          style="color: rgb(239, 186, 14)"
+          >remove_shopping_cart</i
+        >
+      </button>
+    </div>
+  </div>
+
+  <!-- 3. Navigation bar for Product, Photos, Shipping, Seller, and Similar Products -->
+  <!-- navigation bar -->
+  <div class="row mb-3">
+    <ul class="nav nav-pills justify-content-end">
+      <li class="nav-item col-auto">
+        <a
+          class="nav-link"
+          [class.active]="activeSection === 'product'"
+          [ngClass]="{
+            'active bg-dark text-white': activeSection === 'product',
+            'bg-light text-dark': activeSection !== 'product'
+          }"
+          (click)="setActiveSection('product')"
+          href="javascript:void(0);"
+          >Product</a
+        >
+      </li>
+      <li class="nav-item col-auto">
+        <a
+          class="nav-link"
+          [class.active]="activeSection === 'photos'"
+          [ngClass]="{
+            'active bg-dark text-white': activeSection === 'photos',
+            'bg-light text-dark': activeSection !== 'photos'
+          }"
+          (click)="setActiveSection('photos')"
+          href="javascript:void(0);"
+          >Photos</a
+        >
+      </li>
+      <li class="nav-item col-auto">
+        <a
+          class="nav-link"
+          [class.active]="activeSection === 'shipping'"
+          [ngClass]="{
+            'active bg-dark text-white': activeSection === 'shipping',
+            'bg-light text-dark': activeSection !== 'shipping'
+          }"
+          (click)="setActiveSection('shipping')"
+          href="javascript:void(0);"
+          >Shipping</a
+        >
+      </li>
+      <li class="nav-item col-auto">
+        <a
+          class="nav-link"
+          [class.active]="activeSection === 'seller'"
+          [ngClass]="{
+            'active bg-dark text-white': activeSection === 'seller',
+            'bg-light text-dark': activeSection !== 'seller'
+          }"
+          (click)="setActiveSection('seller')"
+          href="javascript:void(0);"
+          >Seller</a
+        >
+      </li>
+      <li class="nav-item col-auto">
+        <a
+          class="nav-link"
+          [class.active]="activeSection === 'similar-products'"
+          [ngClass]="{
+            'active bg-dark text-white': activeSection === 'similar-products',
+            'bg-light text-dark': activeSection !== 'similar-products'
+          }"
+          (click)="setActiveSection('similar-products')"
+          href="javascript:void(0);"
+          ><span class="d-none d-md-inline">Similar Products</span>
+          <span class="d-inline d-md-none">Related</span></a
+        >
+      </li>
+    </ul>
+  </div>
+
+  <!-- corresponding components -->
+  <app-product-details
+    *ngIf="activeSection === 'product'"
+    [itemDetails]="itemDetails"
+  ></app-product-details>
+  <app-photo-details
+    *ngIf="activeSection === 'photos'"
+    [itemDetails]="itemDetails"
+  ></app-photo-details>
+  <app-shipping-details
+    *ngIf="activeSection === 'shipping'"
+    [itemGeneral]="itemGeneral"
+  ></app-shipping-details>
+  <app-seller-details
+    *ngIf="activeSection === 'seller'"
+    [itemDetails]="itemDetails"
+  ></app-seller-details>
+  <app-similar-product-details
+    *ngIf="activeSection === 'similar-products'"
+    [productData]="itemDetails"
+  ></app-similar-product-details>
+</div>

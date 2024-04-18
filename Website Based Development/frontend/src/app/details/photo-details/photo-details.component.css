@@ -1,0 +1,20 @@
+.photo-column {
+  display: flex;
+  flex-direction: column;
+  margin-top: 15px;
+}
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.thick-border {
+  border-width: 10px !important;
+}
+
+@media (max-width: 400px) {
+  .photo-column img {
+    gap: 0px;
+    margin-bottom: 15px;
+  }
+}

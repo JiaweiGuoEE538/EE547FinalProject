@@ -1,0 +1,74 @@
+<div class="container-fluid container-full-height">
+  <div class="row col-11 col-md-10 col-lg-10" style="overflow-x: hidden">
+    <!-- 控制元素的宽度 -->
+    <div class="d-flex flex-column align-items-center">
+      <div class="col-12 col-md-10 col-lg-10" style="background-color: black">
+        <div class="row justify-content-center mb-3">
+          <!-- Add bottom margin to the row -->
+          <div class="col">
+            <!-- 可以添加具体的栅格类，例如 col-6 -->
+            <app-register></app-register>
+          </div>
+          <div class="col">
+            <!-- 可以添加具体的栅格类，例如 col-6 -->
+            <app-login></app-login>
+          </div>
+        </div>
+        <app-search-form
+          (formCleared)="handleFormCleared()"
+          (hideDetails)="handleHideDetails()"
+          (searchPerformed)="showResults = true"
+        ></app-search-form>
+      </div>
+      <app-result-wishlist-button
+        [active]="activeButton"
+        style="margin-top: 10px"
+        (wishlistClicked)="goToWishlist()"
+        (resultsClicked)="goToResults()"
+        (recommendationsClicked)="goToRecommendation()"
+      ></app-result-wishlist-button>
+    </div>
+    <!-- <app-loading-bar
+      style="display: block; width: 100%; height: 20px"
+    ></app-loading-bar> -->
+    <div *ngIf="activeButton === 'result'">
+      <!-- Result Table Component -->
+
+      <app-result-table
+        *ngIf="!showDetails && activeButton === 'result' && showResults"
+        (viewDetails)="handleViewDetails($event)"
+        (viewGeneral)="onGeneralReceived($event)"
+        #resultTableComponent
+      ></app-result-table>
+    </div>
+
+    <div *ngIf="activeButton === 'wishlist'">
+      <app-wishlist
+        *ngIf="!showDetails"
+        (viewDetails)="handleViewDetails($event)"
+        (viewGeneral)="onGeneralReceived($event)"
+      ></app-wishlist>
+    </div>
+    <div *ngIf="activeButton === 'recommendations'">
+      <app-recommendation
+        *ngIf="!showDetails"
+        (viewDetails)="handleViewDetails($event)"
+        (viewGeneral)="onGeneralReceived($event)"
+      ></app-recommendation>
+    </div>
+    <!-- Details Component -->
+    <app-details
+      *ngIf="
+        showDetails &&
+        (activeButton === 'result' ||
+          activeButton === 'wishlist' ||
+          activeButton === 'recommendations')
+      "
+      [itemDetails]="itemDetails"
+      [itemGeneral]="itemGeneral"
+      (backToListEvent)="handleBackToList()"
+    ></app-details>
+  </div>
+</div>
+
+<router-outlet></router-outlet>

@@ -1,0 +1,40 @@
+.container-full-height {
+  min-height: 100vh; /* 占据整个视口高度 */
+  display: flex; /* 启用 Flexbox */
+  align-items: flex-start; /* 垂直居中对齐子项 */
+  justify-content: center; /* 水平居中对齐子项 */
+  width: 100%;
+}
+
+@media (max-width: 390px) {
+  /* 对于小屏幕，调整布局 */
+  .container-fluid {
+    margin-top: 12px;
+  }
+  .search-form {
+    width: 100%;
+  }
+  .row,
+  .col-sm-12,
+  .col-md-10,
+  .col-lg-10 {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
+
+.app-loading-bar {
+  width: 100%;
+  overflow-x: hidden; /* 防止子元素宽度超过父元素导致的水平滚动 */
+}
+
+.app-result-table {
+  width: 100%;
+  overflow-x: hidden; /* 防止子元素宽度超过父元素导致的水平滚动 */
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* 这会确保元素的内边距和边框不会增加它的宽度 */
+}

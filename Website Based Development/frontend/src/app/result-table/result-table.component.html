@@ -1,0 +1,166 @@
+<!-- Main list view -->
+<div
+  *ngIf="
+    !showDetails && innerItem && innerItem.length > 0;
+    else noResultsTemplate
+  "
+  class="mx-auto"
+>
+  <!-- Details button -->
+  <div class="d-flex justify-content-end mb-2">
+    <button
+      class="btn btn-light detail-button"
+      [disabled]="!selectedItem"
+      (click)="showDetailsView()"
+      style="color: black; border: none"
+    >
+      Detail <span class="material-icons">chevron_right</span>
+    </button>
+  </div>
+  <div class="table-responsive">
+    <table class="table-dark table-striped table-hover">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Image</th>
+          <th>Title</th>
+          <th>Price</th>
+          <th>Shipping</th>
+          <th>Zip</th>
+          <th>Favorite</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="
+            let item of innerItem
+              | slice
+                : (currentPage - 1) * itemsPerPage
+                : currentPage * itemsPerPage;
+            let i = index
+          "
+          (click)="setSelectedItem(item)"
+          [class.selected-row]="selectedItem?.itemId[0] === item.itemId[0]"
+        >
+          <td>{{ (currentPage - 1) * itemsPerPage + i + 1 }}</td>
+          <td>
+            <a
+              *ngIf="item.galleryURL && item.galleryURL[0]"
+              [href]="item.galleryURL[0]"
+              target="_blank"
+            >
+              <img
+                [src]="item.galleryURL[0]"
+                alt="Item image"
+                class="img-fluid"
+                (click)="$event.stopPropagation()"
+                style="max-width: 100px"
+              />
+            </a>
+            <span *ngIf="!item.galleryURL || !item.galleryURL[0]">N/A</span>
+          </td>
+          <td>
+            <a
+              href="javascript:void(0)"
+              (click)="getSingleItem(item)"
+              [title]="item.title && item.title[0] ? item.title[0] : 'N/A'"
+              class="no-underline"
+            >
+              {{
+                truncateTitle(
+                  item.title && item.title[0] ? item.title[0] : "N/A"
+                )
+              }}
+            </a>
+          </td>
+          <td>
+            {{
+              item.sellingStatus &&
+              item.sellingStatus[0].currentPrice &&
+              item.sellingStatus[0].currentPrice[0].__value__
+                ? "$" + item.sellingStatus[0].currentPrice[0].__value__
+                : "N/A"
+            }}
+          </td>
+          <td>
+            {{
+              item.shippingInfo &&
+              item.shippingInfo[0].shippingServiceCost &&
+              item.shippingInfo[0].shippingServiceCost[0].__value__ === "0.0"
+                ? "Free Shipping"
+                : item.shippingInfo &&
+                  item.shippingInfo[0].shippingServiceCost &&
+                  item.shippingInfo[0].shippingServiceCost[0].__value__
+                ? "$" + item.shippingInfo[0].shippingServiceCost[0].__value__
+                : "N/A"
+            }}
+          </td>
+          <td>
+            {{
+              item.postalCode && item.postalCode[0] ? item.postalCode[0] : "N/A"
+            }}
+          </td>
+          <!-- <td>
+          <button
+            class="btn btn-outline-secondary"
+            style="background-color: white"
+          >
+            <i class="material-icons">add_shopping_cart</i>
+          </button>
+        </td> -->
+          <td>
+            <button
+              [class.active]="item.isActive"
+              class="btn btn-outline-secondary"
+              style="background-color: white; border: none"
+              (click)="onAddOrRemoveFromCart(item, $event)"
+            >
+              <i class="material-icons" *ngIf="!item.isActive"
+                >add_shopping_cart</i
+              >
+              <i
+                class="material-icons"
+                *ngIf="item.isActive"
+                style="background-color: white; color: rgb(239, 186, 14)"
+                >remove_shopping_cart</i
+              >
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <nav
+    aria-label="Search results navigation"
+    class="d-flex justify-content-center"
+  >
+    <ul class="pagination">
+      <li class="page-item" [class.disabled]="currentPage === 1">
+        <a class="page-link" (click)="setPage(currentPage - 1)"
+          ><span class="material-icons" style="font-size: 1rem"
+            >keyboard_double_arrow_left</span
+          >Previous</a
+        >
+      </li>
+      <li
+        class="page-item"
+        *ngFor="let page of [].constructor(totalPages); let i = index"
+        [class.active]="currentPage === i + 1"
+      >
+        <a class="page-link" (click)="setPage(i + 1)">{{ i + 1 }}</a>
+      </li>
+      <li class="page-item" [class.disabled]="currentPage === totalPages">
+        <a class="page-link" (click)="setPage(currentPage + 1)"
+          >Next<span class="material-icons" style="font-size: 1rem"
+            >keyboard_double_arrow_right</span
+          ></a
+        >
+      </li>
+    </ul>
+  </nav>
+</div>
+
+<ng-template #noResultsTemplate>
+  <div *ngIf="hasSearched" class="alert alert-warning mt-3">No Records.</div>
+</ng-template>

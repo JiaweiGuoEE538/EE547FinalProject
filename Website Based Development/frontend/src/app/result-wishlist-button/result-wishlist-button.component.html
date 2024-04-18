@@ -1,0 +1,29 @@
+<div class="text-center">
+  <button
+    class="btn"
+    [class.btn-light]="activeButton !== 'result'"
+    [class.btn-dark]="activeButton === 'result'"
+    (click)="toggleButton('result')"
+  >
+    Results
+  </button>
+  <button
+    class="btn"
+    [class.btn-light]="activeButton !== 'wishlist'"
+    [class.btn-dark]="activeButton === 'wishlist'"
+    (click)="toggleButton('wishlist')"
+    [disabled]="!isLoggedIn"
+  >
+    Wish List
+  </button>
+
+  <button
+    class="btn"
+    [class.btn-light]="activeButton !== 'recommendations'"
+    [class.btn-dark]="activeButton === 'recommendations'"
+    (click)="toggleButton('recommendations')"
+    [disabled]="!isLoggedIn"
+  >
+    Recommendations
+  </button>
+</div>

@@ -1,0 +1,51 @@
+/* table */
+table {
+  width: 100%;
+  margin-bottom: 1rem;
+  border-collapse: collapse;
+}
+
+table th,
+table td {
+  white-space: nowrap;
+  padding: 0.75rem;
+  vertical-align: top;
+  border-top: 1px solid #dee2e6;
+}
+
+/* table-dark */
+.table-dark {
+  color: #e9ecef;
+  background-color: #212529;
+}
+
+.table-dark th,
+.table-dark td,
+.table-dark thead th {
+  border-color: #343a40;
+}
+
+.table-dark tbody + tbody {
+  border-top: 2px solid #343a40;
+}
+
+/* table-striped */
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: #343a40; /* You can adjust this value */
+}
+
+/* table-hover */
+.table-hover tbody tr:hover {
+  color: #e9ecef;
+  background-color: #454d55; /* You can adjust this value */
+}
+
+.selected-row {
+  background-color: lightgray !important;
+}
+
+.detail-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

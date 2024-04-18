@@ -1,0 +1,92 @@
+<div class="container" *ngIf="tableData.length > 0; else noDetailsTemplate">
+  <table class="table table-dark table-striped">
+    <tbody>
+      <tr *ngFor="let data of tableData">
+        <td>{{ data.key }}</td>
+        <td>
+          <ng-container *ngIf="data.key === 'Product Images'; else normalData">
+            <!-- 这里是一个链接，用户点击它会打开一个包含图片的模态框 -->
+            <a
+              href="javascript:void(0)"
+              (click)="openImageModal(imageModal)"
+              class="no-underline"
+            >
+              View Product Images Here
+            </a>
+          </ng-container>
+          <ng-template #normalData>{{ data.value }}</ng-template>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<ng-template #noDetailsTemplate>
+  <div>No Records.</div>
+</ng-template>
+
+<!-- 图片模态框内容 -->
+<ng-template #imageModal let-modal>
+  <div class="modal-dialog modal-dialog-centered modal-lg" style="margin: 0">
+    <div class="modal-content" style="border: none; border-radius: 0">
+      <!-- 模态头部 -->
+      <div class="modal-header">
+        <h5 class="modal-title">Product Images</h5>
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Close"
+          (click)="modal.dismiss('Close click')"
+        ></button>
+      </div>
+      <!-- 模态主体 -->
+      <div class="modal-body">
+        <!-- Bootstrap Carousel -->
+        <div id="carouselExampleIndicators" class="carousel slide">
+          <div class="carousel-inner">
+            <div
+              class="carousel-item"
+              *ngFor="let imageUrl of imageUrls; let i = index"
+              [class.active]="i == 0"
+            >
+              <img
+                [src]="imageUrl"
+                class="d-block w-100"
+                alt="..."
+                (click)="openImageInNewTab(imageUrl)"
+              />
+            </div>
+          </div>
+          <button
+            class="carousel-control-prev"
+            type="button"
+            data-bs-target="#carouselExampleIndicators"
+            data-bs-slide="prev"
+          >
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button
+            class="carousel-control-next"
+            type="button"
+            data-bs-target="#carouselExampleIndicators"
+            data-bs-slide="next"
+          >
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        </div>
+      </div>
+      <!-- 模态底部 -->
+      <div class="modal-footer justify-content-end">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="modal.dismiss('Close click')"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-template>

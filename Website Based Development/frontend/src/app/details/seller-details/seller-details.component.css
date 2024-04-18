@@ -1,0 +1,18 @@
+.table td {
+  white-space: nowrap;
+}
+
+@media (max-width: 400px) {
+  /* 或者针对iPhone 12 Pro的具体宽度 */
+  .table td,
+  .table th {
+    display: block; /* 每个表格单元格都显示为块级元素 */
+    width: 100%; /* 单元格宽度为100%，确保它们各自占据一行 */
+  }
+
+  /* 可以增加一些内边距，以便于查看 */
+  .table td {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+}

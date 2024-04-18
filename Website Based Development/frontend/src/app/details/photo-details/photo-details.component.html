@@ -1,0 +1,67 @@
+<style>
+  .photo-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* 控制图片之间的间隔 */
+  }
+  img {
+    max-width: 100%; /* 确保图片不会超出容器 */
+    height: auto;
+  }
+</style>
+
+<div class="row" *ngIf="displayedPhotos.length > 0; else noRecordsTemplate">
+  <!-- 第一列 -->
+  <div class="col-md-4 photo-column">
+    <ng-container *ngFor="let photo of displayedPhotos; let i = index">
+      <ng-container *ngIf="i < displayedPhotos.length / 3">
+        <a [href]="photo.link" target="_blank">
+          <img
+            [src]="photo.link"
+            alt="Photo description"
+            class="img-fluid border border-dark thick-border"
+          />
+        </a>
+      </ng-container>
+    </ng-container>
+  </div>
+
+  <!-- 第二列 -->
+  <div class="col-md-4 photo-column">
+    <ng-container *ngFor="let photo of displayedPhotos; let i = index">
+      <ng-container
+        *ngIf="
+          i >= displayedPhotos.length / 3 &&
+          i < (2 * displayedPhotos.length) / 3
+        "
+      >
+        <a [href]="photo.link" target="_blank">
+          <img
+            [src]="photo.link"
+            alt="Photo description"
+            class="img-fluid border border-dark thick-border"
+          />
+        </a>
+      </ng-container>
+    </ng-container>
+  </div>
+
+  <!-- 第三列 -->
+  <div class="col-md-4 photo-column">
+    <ng-container *ngFor="let photo of displayedPhotos; let i = index">
+      <ng-container *ngIf="i >= (2 * displayedPhotos.length) / 3">
+        <a [href]="photo.link" target="_blank">
+          <img
+            [src]="photo.link"
+            alt="Photo description"
+            class="img-fluid border border-dark thick-border"
+          />
+        </a>
+      </ng-container>
+    </ng-container>
+  </div>
+</div>
+
+<ng-template #noRecordsTemplate>
+  <div class="alert alert-warning">No Records.</div>
+</ng-template>

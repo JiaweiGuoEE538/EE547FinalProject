@@ -1,0 +1,156 @@
+<div
+  *ngIf="!showDetails && wishlistItems?.length; else noRecords"
+  class="mx-auto"
+>
+  <div class="d-flex justify-content-end mb-2">
+    <!-- 这个按钮在用户选择一行之前是禁用的 -->
+    <div class="d-flex justify-content-end mb-2">
+      <button
+        class="btn btn-light detail-button"
+        [disabled]="!selectedItem"
+        (click)="showDetailsView()"
+        style="color: black; border: none"
+      >
+        Detail <span class="material-icons">chevron_right</span>
+      </button>
+    </div>
+  </div>
+  <!-- Check if wishlistItems array is not empty -->
+  <div *ngIf="wishlistItems?.length; else noRecords" class="table-responsive">
+    <table class="table-dark table-striped table-hover">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Image</th>
+          <th>Title</th>
+          <th>Price</th>
+          <th>Shipping Option</th>
+          <th>Return Acceptance</th>
+          <th>Favorite</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let item of wishlistItems; let i = index"
+          (click)="setSelectedItem(item)"
+          [class.selected-row]="selectedItem?.itemId[0] === item.itemId[0]"
+        >
+          <td>{{ i + 1 }}</td>
+          <td>
+            <!-- display photo -->
+            <a
+              *ngIf="item.galleryURL && item.galleryURL[0]"
+              [href]="item.galleryURL[0]"
+              target="_blank"
+            >
+              <img
+                [src]="item.galleryURL[0]"
+                alt="Item image"
+                class="img-fluid"
+                style="max-width: 100px"
+                (click)="$event.stopPropagation()"
+              />
+            </a>
+            <!-- without photo, show 'N/A' -->
+            <span *ngIf="!item.galleryURL">N/A</span>
+          </td>
+          <td>
+            <!-- Check if title is available -->
+            <a
+              *ngIf="item.title; else noTitle"
+              href="javascript:void(0)"
+              (click)="getSingleItem(item)"
+              style="text-decoration: none"
+              [title]="item.title && item.title[0] ? item.title[0] : 'N/A'"
+              >{{
+                truncateTitle(
+                  item.title && item.title[0] ? item.title[0] : "N/A"
+                )
+              }}</a
+            >
+            <ng-template #noTitle>N/A</ng-template>
+          </td>
+          <td>
+            <!-- Check if price is available -->
+            <span
+              *ngIf="
+                item.sellingStatus &&
+                  item.sellingStatus[0].convertedCurrentPrice &&
+                  item.sellingStatus[0].convertedCurrentPrice[0].__value__;
+                else noPrice
+              "
+            >
+              ${{ item.sellingStatus[0].convertedCurrentPrice[0].__value__ }}
+            </span>
+            <ng-template #noPrice>N/A</ng-template>
+          </td>
+          <td>
+            <!-- Check if shipping cost is available -->
+
+            <ng-template #noShipping>N/A</ng-template>
+            <span
+              *ngIf="
+                item.shippingInfo &&
+                  item.shippingInfo[0] &&
+                  item.shippingInfo[0].shippingServiceCost &&
+                  item.shippingInfo[0].shippingServiceCost[0] &&
+                  item.shippingInfo[0].shippingServiceCost[0].__value__ !==
+                    null &&
+                  item.shippingInfo[0].shippingServiceCost[0].__value__ !==
+                    undefined;
+                else noShipping
+              "
+            >
+              {{
+                item.shippingInfo[0].shippingServiceCost[0].__value__ === 0
+                  ? "Free Shipping"
+                  : "$" + item.shippingInfo[0].shippingServiceCost[0].__value__
+              }}
+            </span>
+            <ng-template #noShipping>N/A</ng-template>
+          </td>
+          <td>
+            <i
+              class="material-icons"
+              [style.color]="
+                item.returnsAccepted[0] === 'true' ? 'green' : 'red'
+              "
+            >
+              {{ item.returnsAccepted[0] === "true" ? "check" : "close" }}
+            </i>
+          </td>
+          <td>
+            <button
+              class="btn"
+              [class.btn-outline-secondary]="!item.isActive"
+              [class.btn-success]="item.isActive"
+              (click)="removeItem(item, $event)"
+              style="background-color: white; border: none"
+            >
+              <i class="material-icons" *ngIf="!item.isActive"
+                >add_shopping_cart</i
+              >
+              <i
+                class="material-icons"
+                *ngIf="item.isActive"
+                style="background-color: white; color: rgb(239, 186, 14)"
+                >remove_shopping_cart</i
+              >
+            </button>
+          </td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="5"></td>
+          <td>Total Shopping:</td>
+
+          <td>${{ getTotalPrice() }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+<ng-template #noRecords>
+  <div class="alert alert-warning mt-3" role="alert">No Records.</div>
+</ng-template>

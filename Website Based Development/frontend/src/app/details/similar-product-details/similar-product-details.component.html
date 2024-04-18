@@ -1,0 +1,79 @@
+<div
+  class="container mt-3"
+  *ngIf="displayedItems.length > 0; else noRecordsTemplate"
+>
+  <div class="row">
+    <div class="col-md-2">
+      <select
+        [(ngModel)]="selectedSortCategory"
+        class="form-select custom-dropdown"
+        (change)="sortProducts()"
+      >
+        <option value="default">Default</option>
+        <option value="productName">Product Name</option>
+        <option value="daysLeft">Days Left</option>
+        <option value="price">Price</option>
+        <option value="shippingCost">Shipping Cost</option>
+      </select>
+    </div>
+    <div class="col-md-2 mb-3">
+      <select
+        [(ngModel)]="selectedSortOrder"
+        class="form-select custom-dropdown"
+        [disabled]="selectedSortCategory === 'default'"
+        (change)="sortProducts()"
+      >
+        <option value="ascending">Ascending</option>
+        <option value="descending">Descending</option>
+      </select>
+    </div>
+  </div>
+  <div
+    *ngFor="let item of displayedItems"
+    class="row mb-4 border rounded shadow-sm bg-dark"
+  >
+    <div class="col-md-2 p-3">
+      <img
+        *ngIf="item.imageURL"
+        [src]="item.imageURL"
+        alt="Product Image"
+        class="img-fluid rounded d-block"
+      />
+      <div *ngIf="!item.imageURL" style="height: 200px"></div>
+    </div>
+    <div class="col-md-5 p-3">
+      <div
+        *ngIf="item.title"
+        class="font-weight-bold mb-1 custom-text"
+        style="color: aqua"
+      >
+        {{ item.title }}
+      </div>
+      <div
+        *ngIf="item.buyItNowPrice?.__value__"
+        class="custom-text"
+        style="color: yellowgreen"
+      >
+        Price: ${{ item.buyItNowPrice.__value__ }}
+      </div>
+      <div
+        *ngIf="item.shippingCost?.__value__"
+        class="custom-text"
+        style="color: yellow"
+      >
+        Shipping Cost: ${{ item.shippingCost.__value__ }}
+      </div>
+      <div *ngIf="item.timeLeft" class="custom-text" style="color: white">
+        Days Left: {{ extractDays(item.timeLeft) }}
+      </div>
+    </div>
+  </div>
+  <div *ngIf="showMoreButton" class="text-center">
+    <button (click)="toggleShowMore()" class="btn btn-dark mx-auto d-block">
+      {{ showMore ? "Show Less" : "Show More" }}
+    </button>
+  </div>
+</div>
+<ng-template #noRecordsTemplate>
+  <div class="alert alert-warning" role="alert">No Records.</div>
+</ng-template>

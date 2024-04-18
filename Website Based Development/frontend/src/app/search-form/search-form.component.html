@@ -1,0 +1,232 @@
+<form [formGroup]="searchForm" class="submitForm col-lg-10 col-sm-10 col-md-10">
+  <div
+    class="p-2 mb-2 text-white col-lg-8 col-sm-12 col-md-8"
+    style="background-color: black; background-repeat: repeat-y"
+  >
+    <table
+      class="table table-borderless search-table"
+      style="background-color: black; color: white"
+    >
+      <!-- Product Search Title Row -->
+      <tr>
+        <td colspan="2" class="text-center p-0">
+          <p
+            class="fs-3 m-0 p-0"
+            style="background-color: black; color: white; text-align: left"
+          >
+            Product Search
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td class="p-0">
+          Keyword<span style="color: red; background-color: black">*</span>
+        </td>
+        <td style="vertical-align: middle; padding: none">
+          <div style="background-color: black; padding: none; margin: none">
+            <input
+              type="text"
+              class="form-control"
+              formControlName="keywords"
+              placeholder="Enter Product Name(eg. IPhone 8)"
+              autocomplete="product-name"
+            />
+            <div
+              style="background-color: black; color: red; font-size: small"
+              *ngIf="searchForm.get('keywords')?.hasError('onlyWhitespace')"
+            >
+              Please enter a keyword.
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="p-0">Category</td>
+        <td>
+          <div style="background-color: black; align-items: top">
+            <select
+              style="
+                height: 38px;
+                border-radius: 6px;
+                width: 260px;
+                border-color: white;
+                color: rgb(111, 90, 90);
+                font-size: 1rem;
+              "
+              formControlName="category"
+            >
+              <option value="default" selected>All Categories</option>
+              <option value="550">Art</option>
+              <option value="2984">Baby</option>
+              <option value="267">Books</option>
+              <option value="11450">Clothing, Shoes & Accessories</option>
+              <option value="58058">Computers/Tablets & Networking</option>
+              <option value="26395">Health & Beauty</option>
+              <option value="11233">Music</option>
+              <option value="1249">Video Games & Consoles</option>
+            </select>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="p-0">Condition</td>
+        <td>
+          <div style="background-color: black; color: white">
+            <input
+              type="checkbox"
+              id="new"
+              name="new"
+              formControlName="newCondition"
+            />
+            New&nbsp;&nbsp;
+            <input
+              type="checkbox"
+              id="used"
+              name="used"
+              formControlName="usedCondition"
+            />
+            Used&nbsp;&nbsp;
+            <input
+              type="checkbox"
+              id="Unspecified"
+              name="Unspecified"
+              formControlName="unspecifiedCondition"
+            />
+            Unspecified
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="p-0">Shipping Options</td>
+        <td>
+          <div style="background-color: black; color: white">
+            <input
+              type="checkbox"
+              id="local-pickup"
+              name="local-pickup"
+              formControlName="localPickup"
+            />
+            Local Pickup&nbsp;&nbsp;
+            <input
+              type="checkbox"
+              id="free-shipping"
+              name="free-shipping"
+              formControlName="freeShipping"
+            />
+            Free-Shipping&nbsp;&nbsp;
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="p-0">Distance (Miles)</td>
+        <td>
+          <div style="background-color: black; color: white">
+            <input
+              type="number"
+              size="10"
+              id="Distance"
+              name="Distance"
+              style="border-radius: 5px; height: 38px; width: 100px"
+              value="10"
+              formControlName="distance"
+            />
+          </div>
+        </td>
+      </tr>
+      <tr style="height: 20px"></tr>
+      <tr>
+        <td
+          class="p-0"
+          style="vertical-align: top; text-align: left; border: none"
+        >
+          From<span style="color: red; background-color: black">*</span>
+        </td>
+        <td style="vertical-align: top">
+          <div style="background-color: black; color: white">
+            <div>
+              <label>
+                <input
+                  type="radio"
+                  formControlName="location"
+                  value="current"
+                />
+                'Current Location'
+              </label>
+            </div>
+
+            <label style="display: flex; align-items: center">
+              <input type="radio" formControlName="location" value="zip" />
+              <span> &nbsp;Other. Please specify zip code: </span>
+            </label>
+            <input
+              type="text"
+              formControlName="zipCode"
+              style="border-radius: 5px; height: 38px"
+              [class.zipCode-invalid-input]="searchForm.get('zipCode')?.invalid"
+            />
+            <div
+              *ngIf="searchForm.get('zipCode')?.invalid"
+              style="color: red; font-size: small"
+            >
+              Please enter a zip code.
+            </div>
+            <!-- Autocomplete dropdown list -->
+            <ng-container *ngIf="filteredPostalCodes$ | async as postalCodes">
+              <!-- check if we need to show the list -->
+              <div
+                *ngIf="showPostalCodes"
+                style="max-height: 150px; overflow-y: auto"
+              >
+                <ul
+                  style="
+                    list-style-type: none;
+                    padding: 0;
+                    margin: 0;
+                    background-color: white;
+                    color: black;
+                  "
+                >
+                  <li
+                    *ngFor="let postalCode of postalCodes.postalCodes"
+                    style="padding: 5px; cursor: pointer"
+                    (click)="setSelectedZip(postalCode.postalCode)"
+                  >
+                    {{ postalCode.postalCode }}
+                  </li>
+                </ul>
+              </div>
+            </ng-container>
+          </div>
+        </td>
+      </tr>
+      <!-- Buttons Row -->
+      <tr>
+        <td colspan="2" class="p-0">
+          <div class="d-flex" style="background-color: black; border: none">
+            <button
+              type="button"
+              class="btn btn-light mr-6"
+              [disabled]="!canSearch()"
+              (click)="onSearchClick()"
+              style="border: none"
+            >
+              <div class="align-icon-text">
+                <span class="material-icons">search</span>Search
+              </div>
+            </button>
+            <button
+              type="button"
+              class="btn btn-light mx-2"
+              (click)="clearForm()"
+            >
+              <div class="align-icon-text">
+                <span class="material-icons"> clear_all </span>Clear
+              </div>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</form>
+<!-- ... table code above ... -->

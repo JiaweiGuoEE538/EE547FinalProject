@@ -1,0 +1,98 @@
+<div
+  *ngIf="
+    (itemGeneral.shippingInfo && itemGeneral.shippingInfo.length > 0) ||
+      (itemGeneral.returnsAccepted && itemGeneral.returnsAccepted.length > 0);
+    else noRecords
+  "
+>
+  <table class="table table-dark table-striped">
+    <tbody>
+      <!-- Shipping Cost -->
+      <tr *ngIf="itemGeneral.shippingInfo[0].shippingServiceCost">
+        <th>Shipping Cost</th>
+        <td>
+          {{
+            itemGeneral.shippingInfo[0].shippingServiceCost[0].__value__ ===
+            "0.0"
+              ? "Free Shipping"
+              : "$" +
+                itemGeneral.shippingInfo[0].shippingServiceCost[0].__value__
+          }}
+        </td>
+      </tr>
+
+      <!-- Shipping Locations -->
+      <tr *ngIf="itemGeneral.shippingInfo[0].shipToLocations">
+        <th>Shipping Locations</th>
+        <td>{{ itemGeneral.shippingInfo[0].shipToLocations[0] }}</td>
+      </tr>
+
+      <!-- Handling Time -->
+      <tr *ngIf="itemGeneral.shippingInfo[0].handlingTime">
+        <th>Handling Time</th>
+        <td>{{ itemGeneral.shippingInfo[0].handlingTime[0] }} day</td>
+      </tr>
+
+      <!-- Expedited Shipping -->
+      <tr *ngIf="itemGeneral.shippingInfo[0].expeditedShipping">
+        <th>Expedited Shipping</th>
+        <td>
+          <span
+            class="material-icons"
+            [class.true-icon]="
+              itemGeneral.shippingInfo[0].expeditedShipping[0] === 'true'
+            "
+            [class.false-icon]="
+              itemGeneral.shippingInfo[0].expeditedShipping[0] === 'false'
+            "
+          >
+            {{
+              itemGeneral.shippingInfo[0].expeditedShipping[0] === "true"
+                ? "check"
+                : "close"
+            }}
+          </span>
+        </td>
+      </tr>
+
+      <!-- One Day Shipping -->
+      <tr *ngIf="itemGeneral.shippingInfo[0].oneDayShippingAvailable">
+        <th>One Day Shipping</th>
+        <td>
+          <span
+            class="material-icons"
+            [class.true-icon]="
+              itemGeneral.shippingInfo[0].oneDayShippingAvailable[0] === 'true'
+            "
+            [class.false-icon]="
+              itemGeneral.shippingInfo[0].oneDayShippingAvailable[0] === 'false'
+            "
+          >
+            {{
+              itemGeneral.shippingInfo[0].oneDayShippingAvailable[0] === "true"
+                ? "check"
+                : "close"
+            }}
+          </span>
+        </td>
+      </tr>
+      <!-- Returns Accepted -->
+      <tr *ngIf="itemGeneral.returnsAccepted">
+        <th>Returns Accepted</th>
+        <td>
+          <span
+            class="material-icons"
+            [class.true-icon]="itemGeneral.returnsAccepted[0] === 'true'"
+            [class.false-icon]="itemGeneral.returnsAccepted[0] === 'false'"
+          >
+            {{ itemGeneral.returnsAccepted[0] === "true" ? "check" : "close" }}
+          </span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<ng-template #noRecords>
+  <div class="alert alert-warning" role="alert">No Records.</div>
+</ng-template>
