@@ -834,7 +834,8 @@ app.get("/api/recommendations", async (req, res) => {
       allPaidShipping,
       allAcceptReturns,
     };
-
+    let maxSubmitPrice = maxPrice * 1.5;
+    let minSubmitPrice = minPrice * 0.5;
     // 保存更新
     await user.save();
     console.log(user.recommendationParams);
@@ -847,11 +848,11 @@ app.get("/api/recommendations", async (req, res) => {
       keywords: selectedKeyword,
       "paginationInput.entriesPerPage": "300",
       "itemFilter(0).name": "MinPrice",
-      "itemFilter(0).value": minPrice,
+      "itemFilter(0).value": minSubmitPrice,
       "itemFilter(0).paramName": "Currency",
       "itemFilter(0).paramValue": "USD",
       "itemFilter(1).name": "MaxPrice",
-      "itemFilter(1).value": maxPrice,
+      "itemFilter(1).value": maxSubmitPrice,
       "itemFilter(1).paramName": "Currency",
       "itemFilter(1).paramValue": "USD",
     };
@@ -903,7 +904,10 @@ app.get("/api/recommendations", async (req, res) => {
         return shippingCost <= maxShippingCost;
       });
     }
-
+    const wishlistItemIds = new Set(
+      user.wishlist.map((item) => item.itemId[0])
+    );
+    items = items.filter((item) => !wishlistItemIds.has(item.itemId[0]));
     res.json(items.slice(0, 10));
   } catch (error) {
     console.error("fail to get data", error);
