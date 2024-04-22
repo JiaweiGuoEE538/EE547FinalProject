@@ -721,6 +721,53 @@ app.get("/api/postalCodeSearch", async (req, res) => {
 // recommendation
 const natural = require("natural");
 const NGrams = natural.NGrams;
+async function extractKeywords(titles) {
+  const apiKey = "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"; // 替换为你的OpenAI API密钥
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${apiKey}`,
+  };
+  console.log("current titles:", titles);
+  // const prompt = `Extract the most relevant keywords from the following titles:\n${titles.join(
+  //   "\n"
+  // )}`;
+  const titlesString = titles.join(", ");
+  console.log("current titles:", titlesString);
+  const data = {
+    model: "gpt-4",
+    messages: [
+      {
+        role: "system",
+        content:
+          "You will be provided with some items titles in the user wishlist, and your task is to guess the most possible keywords that the user want to search. Jusr give me the most possible one",
+      },
+      {
+        role: "user",
+        content: titlesString,
+      },
+    ],
+    max_tokens: 60,
+  };
+
+  try {
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      data,
+      { headers }
+    );
+    const content = response.data.choices[0].message.content;
+    if (typeof content === "string") {
+      const firstKeyword = content.trim().split(", ")[0]; // 只取第一个关键词
+      return firstKeyword; // 返回第一个关键词
+    } else {
+      console.error("Received non-string content:", keywords);
+      return null; // 或者根据你的应用需求处理错误
+    }
+  } catch (error) {
+    console.error("Error calling OpenAI API:", error);
+    throw error;
+  }
+}
 
 app.get("/api/recommendations", async (req, res) => {
   try {
@@ -734,63 +781,19 @@ app.get("/api/recommendations", async (req, res) => {
       return res.status(404).send("user is not existed");
     }
 
-    let allNGrams = [];
-    let keywordItems = [];
     let maxShippingCost = 0; // 初始化最大运费为0
     let hasShippingCost = false; // 初始化是否有运费成本的标志
     let allFreeShipping = true;
     let allPaidShipping = true;
-    user.wishlist.forEach((item) => {
-      const title = item.title[0].toLowerCase();
-      const unigrams = title.split(/\s+/);
-      const bigrams = NGrams.bigrams(title);
-      const trigrams = NGrams.trigrams(title);
-      allNGrams.push(
-        ...unigrams,
-        ...bigrams.map((bigram) => bigram.join(" ")),
-        ...trigrams.map((trigram) => trigram.join(" "))
-      );
-      keywordItems.push(item);
-    });
-
-    const stopWords = new Set([
-      "a",
-      "the",
-      "an",
-      "of",
-      "and",
-      "or",
-      "none",
-      "no",
-      "nor",
-      "-",
-      ".",
-    ]);
-
-    const frequency = {};
-    allNGrams.forEach((ngram) => {
-      if (!stopWords.has(ngram)) {
-        frequency[ngram] = (frequency[ngram] || 0) + 1;
-      }
-    });
-
-    let maxFreq = 0;
     let selectedKeyword = "";
-    Object.entries(frequency).forEach(([key, value]) => {
-      // 更新最大频率的关键字，如果频率相同，则选择最长的关键字
-      if (
-        value > maxFreq ||
-        (value === maxFreq && key.length > selectedKeyword.length)
-      ) {
-        maxFreq = value;
-        selectedKeyword = key;
-      }
-    });
-
+    const titles = user.wishlist.map((item) => item.title[0]);
+    selectedKeyword = await extractKeywords(titles);
+    selectedKeyword = selectedKeyword.trim();
+    console.log("current keywords: ", selectedKeyword);
     let maxPrice = 0;
     let minPrice = Number.MAX_SAFE_INTEGER;
     user.wishlist.forEach((item) => {
-      if (item.title[0].toLowerCase().includes(selectedKeyword)) {
+      if (item.title[0].includes(selectedKeyword)) {
         const price = parseFloat(
           item.sellingStatus[0].currentPrice[0].__value__
         );
@@ -816,7 +819,6 @@ app.get("/api/recommendations", async (req, res) => {
           }
         }
       }
-      console.log(item.shippingInfo.shippingServiceCost);
     });
 
     const allAcceptReturns = user.wishlist.every(
@@ -838,7 +840,6 @@ app.get("/api/recommendations", async (req, res) => {
     let minSubmitPrice = minPrice * 0.5;
     // 保存更新
     await user.save();
-    console.log(user.recommendationParams);
     const params = {
       "OPERATION-NAME": "findItemsAdvanced",
       "SERVICE-VERSION": "1.0.0",
@@ -861,13 +862,20 @@ app.get("/api/recommendations", async (req, res) => {
       params["itemFilter(2).name"] = "ReturnsAcceptedOnly";
       params["itemFilter(2).value"] = "true";
     }
+    console.log("Using keyword for search:", selectedKeyword);
 
     const response = await axios.get(
       "https://svcs.ebay.com/services/search/FindingService/v1",
       { params }
     );
-    let items = response.data.findItemsAdvancedResponse[0].searchResult[0].item;
+    console.log(
+      "eBay API full response:",
+      JSON.stringify(response.data, null, 2)
+    );
 
+    console.log(response.data.findItemsAdvancedResponse[0]);
+    let items = response.data.findItemsAdvancedResponse[0].searchResult[0].item;
+    console.log("eBay API response:", response.data);
     // 根据运费过滤
     console.log(hasShippingCost);
     if (allFreeShipping) {
@@ -933,5 +941,85 @@ app.get("/api/recommendationParams", async (req, res) => {
   } catch (error) {
     console.error("fail to get data:", error);
     res.status(500).send("server error");
+  }
+});
+
+// search auctions
+const moment = require("moment");
+app.get("/searchAuctions", async (req, res) => {
+  const { keywords } = req.query;
+
+  // 计算当前时间加5分钟
+  const endTimeLaterThan = moment().add(5, "minutes").toISOString();
+
+  const params = {
+    "OPERATION-NAME": "findItemsAdvanced",
+    "SERVICE-VERSION": "1.0.0",
+    "SECURITY-APPNAME": "JiaweiGu-Jiawei57-PRD-4dd800d9a-8dd1f31c",
+    "RESPONSE-DATA-FORMAT": "JSON",
+    "REST-PAYLOAD": "",
+    keywords: keywords,
+    "paginationInput.entriesPerPage": "50",
+    "itemFilter(0).name": "ListingType",
+    "itemFilter(0).value": "Auction",
+    "itemFilter(1).name": "EndTimeLaterThan",
+    "itemFilter(1).value": endTimeLaterThan, // 设置拍卖剩余时间晚于当前时间5分钟
+  };
+
+  try {
+    const response = await axios.get(
+      "https://svcs.ebay.com/services/search/FindingService/v1",
+      { params }
+    );
+    res.json(
+      response.data.findItemsAdvancedResponse[0].searchResult[0].item || []
+    );
+  } catch (error) {
+    console.error("Error fetching auction items: ", error);
+    res.status(500).json({ message: "Failed to fetch data from eBay." });
+  }
+});
+
+// fetch competed auction items
+// "Apple iPhone 11  128GB  Green Verizon AT&T T-Mobile Unlocked "
+async function fetchSimilarItems(itemId) {
+  const params = new URLSearchParams({
+    "OPERATION-NAME": "getSimilarItems",
+    "SERVICE-NAME": "MerchandisingService",
+    "SERVICE-VERSION": "1.1.0",
+    "CONSUMER-ID": "JiaweiGu-Jiawei57-PRD-4dd800d9a-8dd1f31c", // 使用你的eBay App ID
+    "RESPONSE-DATA-FORMAT": "JSON",
+    "REST-PAYLOAD": "",
+    ListingType: "Chinese",
+    itemId: itemId,
+    maxResults: "100", // 你可以调整这个参数以返回不同数量的结果
+  });
+
+  try {
+    const response = await axios.get(
+      `https://svcs.ebay.com/MerchandisingService?${params.toString()}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching similar items:", error);
+    throw error;
+  }
+}
+
+app.get("/api/fetchSimilarItems/:itemId", async (req, res) => {
+  const itemId = req.params.itemId;
+  if (!itemId) {
+    return res.status(400).json({ error: "Item ID is required" });
+  }
+
+  try {
+    const data = await fetchSimilarItems(itemId);
+    res.json(data);
+  } catch (error) {
+    console.error("Error when fetching similar items", error);
+    res.status(500).json({
+      message: "Failed to fetch similar items",
+      error: error.message,
+    });
   }
 });
