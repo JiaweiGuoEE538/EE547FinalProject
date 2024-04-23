@@ -727,19 +727,14 @@ async function extractKeywords(titles) {
     "Content-Type": "application/json",
     Authorization: `Bearer ${apiKey}`,
   };
-  console.log("current titles:", titles);
-  // const prompt = `Extract the most relevant keywords from the following titles:\n${titles.join(
-  //   "\n"
-  // )}`;
-  const titlesString = titles.join(", ");
-  console.log("current titles:", titlesString);
+  const titlesString = titles.join("\n");
   const data = {
     model: "gpt-4",
     messages: [
       {
         role: "system",
         content:
-          "You will be provided with some items titles in the user wishlist, and your task is to guess the most possible keywords that the user want to search. Jusr give me the most possible one",
+          "You will be provided with some items titles in the user wishlist, and your task is to guess the most possible keywords that the user want to search. Just give me the most possible one and the indexes of the titles which contain this keyword. The format of the answer should be: [keyword, indexes]",
       },
       {
         role: "user",
@@ -755,14 +750,9 @@ async function extractKeywords(titles) {
       data,
       { headers }
     );
-    const content = response.data.choices[0].message.content;
-    if (typeof content === "string") {
-      const firstKeyword = content.trim().split(", ")[0]; // 只取第一个关键词
-      return firstKeyword; // 返回第一个关键词
-    } else {
-      console.error("Received non-string content:", keywords);
-      return null; // 或者根据你的应用需求处理错误
-    }
+    const result = response.data.choices[0].message.content;
+    const [keyword, indexes] = JSON.parse(result); // 假设返回的是 "[\"Apple iPhone 13\", [2, 3, 4]]" 形式的字符串
+    return { keyword, indexes };
   } catch (error) {
     console.error("Error calling OpenAI API:", error);
     throw error;
@@ -787,43 +777,73 @@ app.get("/api/recommendations", async (req, res) => {
     let allPaidShipping = true;
     let selectedKeyword = "";
     const titles = user.wishlist.map((item) => item.title[0]);
-    selectedKeyword = await extractKeywords(titles);
-    selectedKeyword = selectedKeyword.trim();
+    const { keyword, indexes } = await extractKeywords(titles);
+    selectedKeyword = keyword;
     console.log("current keywords: ", selectedKeyword);
     let maxPrice = 0;
     let minPrice = Number.MAX_SAFE_INTEGER;
-    user.wishlist.forEach((item) => {
-      if (item.title[0].includes(selectedKeyword)) {
-        const price = parseFloat(
-          item.sellingStatus[0].currentPrice[0].__value__
+    // await user.wishlist.forEach((item) => {
+    //   console.log(item.title[0]);
+    //   if (item.title[0].toLowerCase().includes(selectedKeyword)) {
+    //     const price = parseFloat(
+    //       item.sellingStatus[0].currentPrice[0].__value__
+    //     );
+    //     if (price > maxPrice) maxPrice = price;
+    //     if (price < minPrice) minPrice = price;
+    //     if (
+    //       item.shippingInfo &&
+    //       item.shippingInfo[0].shippingType &&
+    //       item.shippingInfo[0].shippingType.includes("Free")
+    //     ) {
+    //       allPaidShipping = false;
+    //     } else if (
+    //       item.shippingInfo &&
+    //       item.shippingInfo[0].shippingServiceCost &&
+    //       item.shippingInfo[0].shippingServiceCost[0].__value__ !== "0.0"
+    //     ) {
+    //       allFreeShipping = false;
+    //       const shippingCost = parseFloat(
+    //         item.shippingInfo[0].shippingServiceCost[0].__value__
+    //       );
+    //       if (shippingCost > maxShippingCost) {
+    //         maxShippingCost = shippingCost;
+    //       }
+    //     }
+    //   }
+    // });
+    let allAcceptReturns = true;
+    indexes.forEach((index) => {
+      const item = user.wishlist[index];
+      const price = parseFloat(item.sellingStatus[0].currentPrice[0].__value__);
+
+      if (price > maxPrice) maxPrice = price;
+      if (price < minPrice) minPrice = price;
+
+      if (
+        item.shippingInfo &&
+        item.shippingInfo[0].shippingType &&
+        item.shippingInfo[0].shippingType.includes("Free")
+      ) {
+        allPaidShipping = false;
+      } else if (
+        item.shippingInfo &&
+        item.shippingInfo[0].shippingServiceCost &&
+        parseFloat(item.shippingInfo[0].shippingServiceCost[0].__value__) > 0
+      ) {
+        allFreeShipping = false;
+        const shippingCost = parseFloat(
+          item.shippingInfo[0].shippingServiceCost[0].__value__
         );
-        if (price > maxPrice) maxPrice = price;
-        if (price < minPrice) minPrice = price;
-        if (
-          item.shippingInfo &&
-          item.shippingInfo[0].shippingType &&
-          item.shippingInfo[0].shippingType.includes("Free")
-        ) {
-          allPaidShipping = false;
-        } else if (
-          item.shippingInfo &&
-          item.shippingInfo[0].shippingServiceCost &&
-          item.shippingInfo[0].shippingServiceCost[0].__value__ !== "0.0"
-        ) {
-          allFreeShipping = false;
-          const shippingCost = parseFloat(
-            item.shippingInfo[0].shippingServiceCost[0].__value__
-          );
-          if (shippingCost > maxShippingCost) {
-            maxShippingCost = shippingCost;
-          }
-        }
+        if (shippingCost > maxShippingCost) maxShippingCost = shippingCost;
+      }
+      if (item.returnsAccepted[0] === "false") {
+        allAcceptReturns = false;
       }
     });
 
-    const allAcceptReturns = user.wishlist.every(
-      (item) => item.returnsAccepted[0] === "true"
-    );
+    // const allAcceptReturns = user.wishlist.every(
+    //   (item) => item.returnsAccepted[0] === "true"
+    // );
 
     // update user's portait
     user.recommendationParams = {
@@ -838,6 +858,8 @@ app.get("/api/recommendations", async (req, res) => {
     };
     let maxSubmitPrice = maxPrice * 1.5;
     let minSubmitPrice = minPrice * 0.5;
+    console.log("min Price:", minSubmitPrice);
+    console.log("max Price", maxSubmitPrice);
     // 保存更新
     await user.save();
     const params = {
