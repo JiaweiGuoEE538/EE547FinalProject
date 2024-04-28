@@ -1,15 +1,27 @@
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
-const path = require("path");
-const app = express();
 const PORT = process.env.PORT || 3000;
+
+//这里做JWT登录
+const app = express();
+const jwt = require('jsonwebtoken');
+
+//这里暂时搞不了https加密， 因为我们的域名没有对应的证书，获取证书的过程需要配置
+//后期两种：1.继续使用GCP提供给我们的域名，不清楚是否可以自定义域名。2.购买域名网站，且自行配置CA证书
+
+const JWT_SECRET = process.env.JWT_SECRET || 
+'4756c5425d0c5ae59ebb9f32258880ff0b92267df1dfcca15355e88717730f351825fd01c46ee7884d5b5457f1663e25cadf2a448eb655b9c4f2ecdd0656ae1e';
 
 const mongoose = require("mongoose");
 const router = express.Router();
 
-app.use(cors({ origin: "*" }));
+app.use(cors({ 
+  origin: "*" ,
+  methods: ['GET', 'POST']}));
+
 app.options("*", cors());
+
 // Enable CORS for all routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -229,161 +241,59 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// 用户登录的路由
+// //如果使用session -> 需要保存session，如果是默认环境下服务器重启会导致session缓存丢失
+// //若需要保存session，则需要借助外部服务器如redis
+// //否则，使用JWT，并将token储存在浏览器的localStorage中
+// app.post("/login", (req, res, next) => {
+//   passport.authenticate("local", (err, user, info) => {
+//     if (err) {
+//       return res.status(500).json({ message: err.message });
+//     }
+//     if (!user) {
+//       // 登录失败，返回前端错误信息
+//       return res.status(401).json({ message: info.message });
+//     }
+//     req.logIn(user, (err) => {
+//       if (err) {
+//         return res.status(500).json({ message: err.message });
+//       }
+//       // 登录成功
+//       return res.json({ message: "Logged in successfully", user: user });
+//     });
+//   })(req, res, next);
+// });
+
 app.post("/login", (req, res, next) => {
-  passport.authenticate("local", (err, user, info) => {
-    if (err) {
-      return res.status(500).json({ message: err.message });
+  console.log("user login");
+  const {username, password} = req.body;
+  passport.authenticate('local', {session : false}, (err, user, info) => {
+    if(err){
+      return res.status(500).json({message:err.message});
     }
-    if (!user) {
-      // 登录失败，返回前端错误信息
-      return res.status(401).json({ message: info.message });
+
+    if(!user){
+      return res.status(401).json({message: err.message});
     }
-    req.logIn(user, (err) => {
-      if (err) {
-        return res.status(500).json({ message: err.message });
-      }
-      // 登录成功
-      return res.json({ message: "Logged in successfully", user: user });
-    });
+
+    const token = jwt.sign({id: user.id, username: user.username}, JWT_SECRET, {expiresIn : '1h'});
+
+    res.json({message : 'Logged in successfully', user: user, token: token});
   })(req, res, next);
-});
+})
 
 app.post("/logout", (req, res) => {
-  // 使用回调函数确保登出操作完成
   req.logout(function (err) {
     if (err) {
-      // 如果登出过程中发生错误，返回错误信息
       console.error("Logout error:", err);
       return res.status(500).send({ message: "Logout failed", error: err });
     }
-    // 登出成功后发送响应
     res.status(200).send({ message: "Logged out successfully" });
   });
 });
 
 // add, remove
 const Item = require("./models/item.model"); // 更新这个路径以指向您的模型文件
-// add
-// app.post("/api/addToCart", async (req, res) => {
-//   // 从请求体中获取商品数据
-//   const itemData = req.body;
-//   console.log(itemData);
-//   // 检查 itemId 是否是数组，并获取第一个元素
-//   if (Array.isArray(itemData.itemId)) {
-//     itemData.itemId = itemData.itemId[0];
-//   }
 
-//   try {
-//     // 使用接收到的数据创建 Item 模型的一个新实例
-//     const newItem = new Item(itemData);
-
-//     // 将新商品项保存到数据库
-//     await newItem.save();
-
-//     // 发送一个成功响应
-//     res.status(201).json({ message: "Item added successfully!" });
-//   } catch (error) {
-//     // 如果出现错误，发送一个错误响应
-//     res.status(500).json({ message: error.message });
-//   }
-// });
-
-// app.post("/api/addToCart", async (req, res) => {
-//   const { itemData, username } = req.body; // 接收整个 item 对象和 username
-
-//   try {
-//     // 查找用户并填充其 wishlist 的所有 item
-//     const user = await User.findOne({ username }).populate({
-//       path: "wishlist",
-//       model: "Item",
-//     });
-
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     // 检查心愿单中是否已存在该 itemId
-//     const existingItem = user.wishlist.find(
-//       (item) => item.itemId === itemData.itemId
-//     );
-
-//     if (existingItem) {
-//       return res
-//         .status(409)
-//         .json({ message: "Item already exists in wishlist" }); // 409 Conflict
-//     }
-
-//     // 如果商品不存在，则创建新的商品
-//     let newItem = new Item(itemData);
-//     await newItem.save();
-
-//     // 更新用户的 wishlist，添加新的商品
-//     user.wishlist.push(newItem);
-//     await user.save(); // 保存用户文档的更新
-
-//     res.status(201).json({
-//       message: "Item added to wishlist successfully",
-//       wishlist: user.wishlist,
-//     });
-//   } catch (error) {
-//     console.error("Error adding item to wishlist: ", error);
-//     res.status(500).json({ message: error.message });
-//   }
-// });
-// app.post("/api/addToCart", async (req, res) => {
-//   const { itemData, username } = req.body;
-
-//   try {
-//     const user = await User.findOne({ username }).populate({
-//       path: "wishlist",
-//       model: "Item",
-//     });
-
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     // 检查心愿单中是否已存在该 itemId
-//     const existingItem = user.wishlist.find((item) =>
-//       item.itemId.includes(itemData.itemId[0])
-//     );
-
-//     if (existingItem) {
-//       return res
-//         .status(409)
-//         .json({ message: "Item already exists in wishlist" });
-//     }
-
-//     // 检查数据库中是否已存在该 itemId
-//     const itemExists = await Item.findOne({ itemId: itemData.itemId[0] });
-//     if (itemExists) {
-//       // 如果商品已存在，直接添加到用户的心愿单
-//       user.wishlist.push(itemExists);
-//       await user.save();
-//       return res.status(201).json({
-//         message: "Existing item added to wishlist successfully",
-//         wishlist: user.wishlist,
-//       });
-//     }
-
-//     // 如果商品不存在，则创建新的商品
-//     let newItem = new Item(itemData);
-//     await newItem.save();
-
-//     // 更新用户的 wishlist，添加新的商品
-//     user.wishlist.push(newItem);
-//     await user.save();
-
-//     res.status(201).json({
-//       message: "New item added to wishlist successfully",
-//       wishlist: user.wishlist,
-//     });
-//   } catch (error) {
-//     console.error("Error adding item to wishlist: ", error);
-//     res.status(500).json({ message: error.message });
-//   }
-// });
 app.post("/api/addToCart", async (req, res) => {
   const { itemData, username } = req.body;
 
@@ -419,62 +329,6 @@ app.post("/api/addToCart", async (req, res) => {
   }
 });
 
-// remove
-// app.post("/api/removeFromCart", async (req, res) => {
-//   const { itemId } = req.body; // 从请求体中获取 itemId
-
-//   try {
-//     // 在数据库中找到该项目并删除它
-//     await Item.findOneAndDelete({ itemId: itemId });
-
-//     res.json({ message: "Item removed from cart successfully" });
-//   } catch (error) {
-//     console.error("Error removing item from cart: ", error);
-//     res.status(500).json({ message: error.message });
-//   }
-// });
-
-// app.post("/api/removeFromCart", async (req, res) => {
-//   const { itemId, username } = req.body; // 确保前端发送 username 和 itemId
-
-//   try {
-//     // 查找用户并填充其 wishlist
-//     const user = await User.findOne({ username }).populate("wishlist");
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     // 在用户的 wishlist 中查找具有指定 itemId 的 Item
-//     // 注意这里的修改，我们使用 Array.includes 方法来检查 itemId 是否存在于数组中
-//     const itemToRemove = user.wishlist.find((item) =>
-//       item.itemId.includes(itemId)
-//     );
-//     console.log(user.wishlist);
-//     console.log(itemId, itemToRemove);
-//     if (!itemToRemove) {
-//       return res.status(404).json({ message: "Item not found in wishlist" });
-//     }
-
-//     // 从数据库中移除该 Item 对象
-//     await Item.findByIdAndRemove(itemToRemove._id);
-
-//     // 从用户的 wishlist 中移除对该 Item 的引用
-//     await User.findOneAndUpdate(
-//       { _id: user._id },
-//       { $pull: { wishlist: itemToRemove._id } },
-//       { new: true }
-//     );
-
-//     res.json({
-//       message: "Item removed from wishlist successfully",
-//       wishlist: user.wishlist, // 这可能需要再次填充来反映最新状态
-//     });
-//   } catch (error) {
-//     console.error("Error removing item from wishlist: ", error);
-//     res.status(500).json({ message: error.message });
-//   }
-// });
-
 app.post("/api/removeFromCart", async (req, res) => {
   const { itemId, username } = req.body;
 
@@ -506,17 +360,7 @@ app.post("/api/removeFromCart", async (req, res) => {
   }
 });
 
-//get
-// app.get("/api/wishlist", async (req, res) => {
-//   try {
-//     // const wishlistItems = await Item.find();
-//     const wishlistItems = await Item.find().sort({ createdAt: 1 }); // 假设您有一个 Wishlist 模型
-//     res.json(wishlistItems);
-//     console.log(wishlistItems);
-//   } catch (error) {
-//     res.status(500).send(error.message);
-//   }
-// });
+
 app.get("/api/wishlist", async (req, res) => {
   const { username } = req.query; // 从查询参数获取用户名
   try {
@@ -530,52 +374,6 @@ app.get("/api/wishlist", async (req, res) => {
   }
 });
 
-// get all ItemId
-// app.get("/api/getItemIds", async (req, res) => {
-//   try {
-//     // 查询所有商品，但只返回 'itemId' 字段
-//     const itemIds = await Item.find({}, "itemId -_id"); // '-_id' 是说我们不想返回默认的 MongoDB '_id' 字段
-//     // 这将是一个对象数组，例如：[{itemId: 'id1'}, {itemId: 'id2'}, ...]
-//     // 如果你想要一个纯粹的 'itemId' 字符串数组，你可以简单地从这些对象中提取它们
-//     const idArray = itemIds.map((item) => item.itemId);
-
-//     res.json(idArray); // 返回 itemId 数组
-//     console.log(idArray);
-//   } catch (error) {
-//     console.error("Error fetching item IDs: ", error);
-//     res.status(500).send("Internal Server Error");
-//   }
-// });
-
-// app.get("/api/getItemIds", async (req, res) => {
-//   const { username } = req.query; // 从请求的查询参数中获取 username
-
-//   if (!username) {
-//     return res.status(400).json({ message: "Username is required" });
-//   }
-
-//   try {
-//     // 首先，找到该用户并填充其 wishlist
-//     const user = await User.findOne({ username }).populate({
-//       path: "wishlist",
-//       model: "Item",
-//     });
-
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     // 从用户的心愿单中提取 itemId
-//     const itemIds = user.wishlist.map((item) => item.itemId);
-//     const flattenedIds = itemIds.flat(); // 由于 itemId 是数组，所以我们需要展平它们
-
-//     res.json(flattenedIds); // 返回展平后的 itemId 数组
-//     console.log(flattenedIds);
-//   } catch (error) {
-//     console.error("Error fetching item IDs: ", error);
-//     res.status(500).send("Internal Server Error");
-//   }
-// });
 
 app.get("/api/getItemIds", async (req, res) => {
   const { username } = req.query;
@@ -931,3 +729,44 @@ app.get("/api/recommendationParams", async (req, res) => {
     res.status(500).send("server error");
   }
 });
+
+// class EventEmitter {
+//   // 补全代码
+//   //on 函数添加事件， emit函数移除事件
+//   //同一时间名称可能有多个不同的执行函数
+//   constructor() {
+//     this.events = {};
+//   }
+  
+//   on(event, listener){
+//     if(!this.events[event]){
+//       this.events[event] = [];
+//     }
+
+//     this.events[event].push(listener);
+//   }
+  
+//   emit(event){
+//     if(this.events[event]){
+//       this.events[event].forEach(listener => {
+//         listener();
+//       })
+//     }
+//   }
+
+//   removeListener(event, listener){
+//     if(this.events[event]){
+//       this.events[event] = this.events[event].filter(item => item !== listener);
+//     }
+//   }
+
+//   //移除所有监听器
+//   off(event){
+//     if(this.events[event]){
+//       delete this.events[event];
+//     }
+//   }
+  
+// }
+
+
