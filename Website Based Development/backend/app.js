@@ -264,7 +264,7 @@ app.post("/logout", (req, res) => {
 
 // add, remove
 const Item = require("./models/item.model"); // 更新这个路径以指向您的模型文件
-// add
+
 // app.post("/api/addToCart", async (req, res) => {
 //   // 从请求体中获取商品数据
 //   const itemData = req.body;
@@ -419,7 +419,7 @@ app.post("/api/addToCart", async (req, res) => {
   }
 });
 
-// remove
+// remove from cart
 // app.post("/api/removeFromCart", async (req, res) => {
 //   const { itemId } = req.body; // 从请求体中获取 itemId
 
@@ -507,16 +507,7 @@ app.post("/api/removeFromCart", async (req, res) => {
 });
 
 //get
-// app.get("/api/wishlist", async (req, res) => {
-//   try {
-//     // const wishlistItems = await Item.find();
-//     const wishlistItems = await Item.find().sort({ createdAt: 1 }); // 假设您有一个 Wishlist 模型
-//     res.json(wishlistItems);
-//     console.log(wishlistItems);
-//   } catch (error) {
-//     res.status(500).send(error.message);
-//   }
-// });
+
 app.get("/api/wishlist", async (req, res) => {
   const { username } = req.query; // 从查询参数获取用户名
   try {
@@ -530,7 +521,8 @@ app.get("/api/wishlist", async (req, res) => {
   }
 });
 
-// get all ItemId
+// get all ItemIds
+
 // app.get("/api/getItemIds", async (req, res) => {
 //   try {
 //     // 查询所有商品，但只返回 'itemId' 字段
@@ -1036,7 +1028,93 @@ app.get("/api/fetchSimilarItems/:itemId", async (req, res) => {
 
   try {
     const data = await fetchSimilarItems(itemId);
-    res.json(data);
+    if (
+      data &&
+      data.getSimilarItemsResponse &&
+      data.getSimilarItemsResponse.itemRecommendations &&
+      data.getSimilarItemsResponse.itemRecommendations.item
+    ) {
+      const items = data.getSimilarItemsResponse.itemRecommendations.item;
+      console.log(items);
+      // 初始化数据集合
+      let noBidCountItems = [];
+      let hasBidCountItems = [];
+
+      // 初始化统计变量
+      let totalNoBidCountPrice = 0;
+      let noBidCountItemsCount = 0;
+      let weightedPriceSum = 0;
+      let totalBidCounts = 0;
+
+      // 遍历并处理每个item
+      items.forEach((item) => {
+        const bidCount = item.bidCount ? parseInt(item.bidCount) : -1;
+        const priceValue = item.currentPrice
+          ? parseFloat(item.currentPrice.__value__)
+          : parseFloat(item.buyItNowPrice.__value__);
+        const itemData = {
+          itemId: item.itemId,
+          bidCount: bidCount,
+          price: priceValue,
+        };
+        if (!item.bidCount) {
+          // 没有bidCount的item
+          noBidCountItems.push(itemData);
+          totalNoBidCountPrice += parseFloat(item.buyItNowPrice.__value__);
+          noBidCountItemsCount++;
+        } else {
+          // 有bidCount的item
+          auctionBuyNow = parseFloat(item.buyItNowPrice.__value__);
+          if (auctionBuyNow != 0.0) {
+            totalNoBidCountPrice += auctionBuyNow;
+            noBidCountItemsCount++;
+          }
+          hasBidCountItems.push(itemData);
+          weightedPriceSum += priceValue * bidCount;
+          totalBidCounts += bidCount;
+        }
+      });
+
+      // 计算平均数和加权平均数
+      const averagePriceNoBid =
+        noBidCountItemsCount > 0
+          ? totalNoBidCountPrice / noBidCountItemsCount
+          : 0;
+      const weightedAveragePrice =
+        totalBidCounts > 0 ? weightedPriceSum / totalBidCounts : 0;
+
+      // 去掉一个最高和一个最低价格的项目后计算加权平均价格
+      let revisedWeightedAveragePrice = weightedAveragePrice;
+      if (hasBidCountItems.length > 2) {
+        // 排序并去除最高和最低价格的商品
+        hasBidCountItems.sort((a, b) => a.price - b.price);
+        const trimmedItems = hasBidCountItems.slice(1, -1);
+        const revisedWeightedPriceSum = trimmedItems.reduce(
+          (sum, item) => sum + item.price * item.bidCount,
+          0
+        );
+        const revisedTotalBidCounts = trimmedItems.reduce(
+          (sum, item) => sum + item.bidCount,
+          0
+        );
+        revisedWeightedAveragePrice =
+          revisedTotalBidCounts > 0
+            ? revisedWeightedPriceSum / revisedTotalBidCounts
+            : 0;
+      }
+
+      // 返回结果
+      res.json({
+        totalItems: items.length,
+        noBidCountItems: noBidCountItems,
+        hasBidCountItems: hasBidCountItems,
+        averagePriceNoBid: averagePriceNoBid.toFixed(2),
+        weightedAveragePrice: weightedAveragePrice.toFixed(2),
+        revisedWeightedAveragePrice: revisedWeightedAveragePrice.toFixed(2),
+      });
+    } else {
+      res.status(404).json({ message: "No items found." });
+    }
   } catch (error) {
     console.error("Error when fetching similar items", error);
     res.status(500).json({
