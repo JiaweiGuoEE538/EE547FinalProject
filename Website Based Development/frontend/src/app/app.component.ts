@@ -1,6 +1,7 @@
 import { Component, ViewChild } from "@angular/core";
 import { SharedService } from "./services/shared.service";
 import { ResultTableComponent } from "./result-table/result-table.component";
+import { AuctionsComponent } from "./auctions/auctions.component";
 @Component({
   selector: "app-root",
   templateUrl: "./app.component.html",
@@ -8,13 +9,17 @@ import { ResultTableComponent } from "./result-table/result-table.component";
 })
 export class AppComponent {
   title = "frontend";
-  activeButton!: "result" | "wishlist" | "recommendations";
+  activeButton!: "result" | "wishlist" | "recommendations" | "auctions";
   // 控制是否显示详情组件
   showDetails: boolean = false;
   showResults: boolean = true;
   @ViewChild(ResultTableComponent, { static: false })
   resultTableComponent?: ResultTableComponent;
+  auctionsComponent?: AuctionsComponent;
   isResultTableComponentLoaded: boolean = false;
+  currentKeywords: string = "";
+  showAuctions: boolean = true;
+  selectedAuctionId: string | null = null;
 
   // 用于存储选中行的数据，如果需要的话
   itemDetails: any = null; // Holds the currently selected item details
@@ -62,8 +67,10 @@ export class AppComponent {
     setTimeout(() => {
       if (this.resultTableComponent) {
         this.resultTableComponent.clearTable();
+        this.auctionsComponent?.clearTable();
         setTimeout(() => {
           this.showResults = false;
+          this.showAuctions = true;
         }, 10);
       } else {
         console.error("ResultTableComponent is not available.");
@@ -71,6 +78,8 @@ export class AppComponent {
     });
     this.showResults = true;
     // this.handleShowResult();
+    this.currentKeywords = "";
+    this.selectedAuctionId = "";
   }
   handleShowResult() {
     this.showResults = false;
@@ -92,5 +101,18 @@ export class AppComponent {
   goToRecommendation() {
     this.showDetails = false; // Hide details view when viewing recommendations
     this.activeButton = "recommendations"; // Set the active button state
+  }
+
+  goToAuctions() {
+    this.showDetails = false; // Hide details view when viewing recommendations
+    this.activeButton = "auctions"; // Set the active button state
+  }
+
+  showAuctionDetails(auctionId: string): void {
+    this.selectedAuctionId = auctionId;
+    this.showAuctions = false; // 显示详情组件
+  }
+  backToList(): void {
+    this.showAuctions = true; // 返回拍卖列表
   }
 }

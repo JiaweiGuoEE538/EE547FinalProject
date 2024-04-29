@@ -13,7 +13,7 @@ export class SharedService {
 
   // 更新类型定义以包括 'recommendations'
   private activeButtonSource = new BehaviorSubject<
-    "result" | "wishlist" | "recommendations"
+    "result" | "wishlist" | "recommendations" | "auctions"
   >(
     "result" // 默认仍然可以是 'result'
   );
@@ -30,7 +30,9 @@ export class SharedService {
   }
 
   // 更新方法以接受新的类型
-  updateActiveButton(buttonType: "result" | "wishlist" | "recommendations") {
+  updateActiveButton(
+    buttonType: "result" | "wishlist" | "recommendations" | "auctions"
+  ) {
     this.activeButtonSource.next(buttonType);
   }
 }

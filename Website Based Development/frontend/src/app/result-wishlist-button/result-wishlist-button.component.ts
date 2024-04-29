@@ -13,11 +13,12 @@ import { AuthenticationService } from "../services/authentication.service";
   styleUrls: ["./result-wishlist-button.component.css"],
 })
 export class ResultWishlistButtonComponent {
-  activeButton: "result" | "wishlist" | "recommendations" = "result"; // 包括推荐状态
+  activeButton: "result" | "wishlist" | "recommendations" | "auctions" =
+    "result"; // 包括推荐状态
   @Output() wishlistClicked = new EventEmitter<void>();
   @Output() resultsClicked = new EventEmitter<void>();
   @Output() recommendationsClicked = new EventEmitter<void>(); // 新增发射器
-  @Input() active!: "result" | "wishlist" | "recommendations"; // 接收外部的激活状态
+  @Input() active!: "result" | "wishlist" | "recommendations" | "auctions"; // 接收外部的激活状态
 
   isLoggedIn = false; // Track user's login status
   constructor(
@@ -45,7 +46,9 @@ export class ResultWishlistButtonComponent {
     }
   }
 
-  toggleButton(buttonType: "result" | "wishlist" | "recommendations") {
+  toggleButton(
+    buttonType: "result" | "wishlist" | "recommendations" | "auctions"
+  ) {
     this.activeButton = buttonType;
     this.sharedService.updateActiveButton(buttonType);
     if (buttonType === "wishlist") {
