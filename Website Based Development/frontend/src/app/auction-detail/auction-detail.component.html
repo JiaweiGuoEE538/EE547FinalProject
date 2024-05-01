@@ -1,0 +1,153 @@
+<div>
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <button
+        class="btn btn-light list-button"
+        (click)="back.emit()"
+        style="color: black; display: flex; align-items: center"
+      >
+        <span class="material-icons" style="margin-right: 8px"
+          >chevron_left</span
+        >
+        List
+      </button>
+    </div>
+  </div>
+
+  <h1 style="text-align: center; width: 100%">
+    {{ this.auctionStateService.selectedItem.title[0] }}
+  </h1>
+
+  <h2>Overview</h2>
+  <table class="table-dark table-striped table-hover">
+    <thead>
+      <tr>
+        <th scope="col">Description</th>
+        <th scope="col">Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Current Price</td>
+        <td>
+          {{
+            this.auctionStateService.selectedItem.sellingStatus[0]
+              .convertedCurrentPrice[0].__value__
+          }}
+        </td>
+      </tr>
+      <tr>
+        <td>Number of Products Not in Auction</td>
+        <td>{{ similarItems.noBidCountItems.length }}</td>
+      </tr>
+      <tr>
+        <td>Number of Products in Auction</td>
+        <td>{{ similarItems.hasBidCountItems.length }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <h2>Distribution</h2>
+  <div *ngIf="priceRangeData['noBidCountItems']">
+    <h3>Items Without Bidding</h3>
+    <table class="table-dark table-striped table-hover">
+      <thead>
+        <tr>
+          <th>Price Range</th>
+          <th>Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let range of priceRangeData['noBidCountItems'].ranges">
+          <td>{{ range.range }}</td>
+          <td>{{ range.count }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- Table for Has Bid Count Items -->
+  <div *ngIf="priceRangeData['hasBidCountItems']">
+    <h3>Items With Bidding Process</h3>
+    <table class="table-dark table-striped table-hover">
+      <thead>
+        <tr>
+          <th>Price Range</th>
+          <th>Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let range of priceRangeData['hasBidCountItems'].ranges">
+          <td>{{ range.range }}</td>
+          <td>{{ range.count }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <h2>Prediction</h2>
+
+  <table class="table-dark table-striped table-hover">
+    <thead>
+      <tr>
+        <th scope="col">Description</th>
+        <th scope="col">Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Maximum Value Based on Market</td>
+        <td style="display: flex; align-items: center; justify-content: center">
+          {{ similarItems.averagePriceNoBid }}
+          <span
+            *ngIf="shouldShowDownwardGreenArrow()"
+            class="material-icons"
+            style="color: green"
+            >arrow_downward</span
+          >
+          <span
+            *ngIf="shouldShowUpwardRedArrow()"
+            class="material-icons"
+            style="color: red"
+            >arrow_upward</span
+          >
+        </td>
+      </tr>
+      <tr>
+        <td>Current Value People Believe</td>
+        <td style="display: flex; align-items: center; justify-content: center">
+          {{ similarItems.revisedWeightedAveragePrice }}
+          <span
+            *ngIf="shouldShowUpwardRedArrowForRevised()"
+            class="material-icons"
+            style="color: red"
+            >arrow_upward</span
+          >
+          <span
+            *ngIf="shouldShowUpwardGreenArrow()"
+            class="material-icons"
+            style="color: green"
+            >arrow_upward</span
+          >
+        </td>
+      </tr>
+      <tr>
+        <td>Value Prediction</td>
+        <td>{{ this.indicatedPrice }}</td>
+      </tr>
+      <tr>
+        <td>Description</td>
+        <td class="text-wrap">
+          {{ this.description }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div *ngIf="this.indicatedPrice != '-'" class="d-flex justify-content-center">
+    <button class="btn btn-dark list-button" (click)="goToEbay()">
+      Take Part in Bidding Process
+    </button>
+  </div>
+
+  <!-- No Data Available Message -->
+  <div *ngIf="!similarItems || similarItems.length === 0">
+    <p>No similar items found.</p>
+  </div>
+</div>

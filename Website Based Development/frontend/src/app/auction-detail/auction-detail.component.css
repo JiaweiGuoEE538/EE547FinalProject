@@ -1,0 +1,72 @@
+/* Global table styles */
+table {
+  width: 100%;
+  margin-bottom: 1rem;
+  border-collapse: collapse;
+}
+
+/* Cell styles */
+table th,
+table td {
+  white-space: nowrap;
+  /* overflow: hidden; */
+  padding: 0.75rem;
+  vertical-align: top;
+  border-top: 1px solid #dee2e6;
+  text-align: center;
+}
+
+/* Dark theme styles */
+.table-dark {
+  color: #e9ecef;
+  background-color: #212529;
+}
+
+.table-dark th,
+.table-dark td,
+.table-dark thead th {
+  border-color: #343a40;
+}
+
+/* Striped rows */
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: #343a40; /* Adjust color as needed */
+}
+
+/* Hover effect */
+.table-hover tbody tr:hover {
+  color: #e9ecef;
+  background-color: #454d55; /* Adjust color as needed */
+}
+
+/* Selected row highlight */
+.selected-row {
+  background-color: lightgray !important;
+}
+
+/* Detail button alignment */
+.detail-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.centered-content {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+.page-link .material-icons {
+  vertical-align: middle;
+  display: inline-block;
+}
+
+/* change the link words style*/
+.no-underline {
+  text-decoration: none;
+}
+
+.no-underline:hover {
+  text-decoration: underline;
+}

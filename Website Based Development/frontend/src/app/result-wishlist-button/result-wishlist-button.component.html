@@ -26,4 +26,13 @@
   >
     Recommendations
   </button>
+  <button
+    class="btn"
+    [class.btn-light]="activeButton !== 'auctions'"
+    [class.btn-dark]="activeButton === 'auctions'"
+    (click)="toggleButton('auctions')"
+    [disabled]="!isLoggedIn"
+  >
+    Auctions
+  </button>
 </div>

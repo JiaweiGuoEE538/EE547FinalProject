@@ -26,6 +26,8 @@ import { RoundProgressModule } from 'angular-svg-round-progressbar';
 import { RegisterComponent } from './register/register.component';
 import { LoginComponent } from './login/login.component';
 import { RecommendationComponent } from './recommendation/recommendation.component';
+import { AuctionsComponent } from './auctions/auctions.component';
+import { AuctionDetailComponent } from './auction-detail/auction-detail.component';
 
 @NgModule({
   declarations: [
@@ -44,6 +46,8 @@ import { RecommendationComponent } from './recommendation/recommendation.compone
     RegisterComponent,
     LoginComponent,
     RecommendationComponent,
+    AuctionsComponent,
+    AuctionDetailComponent,
   ],
   imports: [
     BrowserModule,

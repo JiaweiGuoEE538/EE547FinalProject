@@ -15,6 +15,7 @@
           </div>
         </div>
         <app-search-form
+          (keywordsEmitted)="currentKeywords = $event"
           (formCleared)="handleFormCleared()"
           (hideDetails)="handleHideDetails()"
           (searchPerformed)="showResults = true"
@@ -56,6 +57,19 @@
         (viewGeneral)="onGeneralReceived($event)"
       ></app-recommendation>
     </div>
+    <div
+      *ngIf="
+        activeButton === 'auctions' &&
+        showAuctions &&
+        resultTableComponent?.innerItem?.length != 0
+      "
+    >
+      <app-auctions
+        *ngIf="!showDetails"
+        [keywords]="currentKeywords"
+        (viewAuctionDetails)="showAuctionDetails($event)"
+      ></app-auctions>
+    </div>
     <!-- Details Component -->
     <app-details
       *ngIf="
@@ -68,6 +82,16 @@
       [itemGeneral]="itemGeneral"
       (backToListEvent)="handleBackToList()"
     ></app-details>
+    <div
+      *ngIf="
+        !showAuctions && activeButton === 'auctions' && currentKeywords != ''
+      "
+    >
+      <app-auction-detail
+        [auctionId]="selectedAuctionId"
+        (back)="backToList()"
+      ></app-auction-detail>
+    </div>
   </div>
 </div>
 

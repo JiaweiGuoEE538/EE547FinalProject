@@ -264,7 +264,7 @@ app.post("/logout", (req, res) => {
 
 // add, remove
 const Item = require("./models/item.model"); // 更新这个路径以指向您的模型文件
-// add
+
 // app.post("/api/addToCart", async (req, res) => {
 //   // 从请求体中获取商品数据
 //   const itemData = req.body;
@@ -419,7 +419,7 @@ app.post("/api/addToCart", async (req, res) => {
   }
 });
 
-// remove
+// remove from cart
 // app.post("/api/removeFromCart", async (req, res) => {
 //   const { itemId } = req.body; // 从请求体中获取 itemId
 
@@ -507,16 +507,7 @@ app.post("/api/removeFromCart", async (req, res) => {
 });
 
 //get
-// app.get("/api/wishlist", async (req, res) => {
-//   try {
-//     // const wishlistItems = await Item.find();
-//     const wishlistItems = await Item.find().sort({ createdAt: 1 }); // 假设您有一个 Wishlist 模型
-//     res.json(wishlistItems);
-//     console.log(wishlistItems);
-//   } catch (error) {
-//     res.status(500).send(error.message);
-//   }
-// });
+
 app.get("/api/wishlist", async (req, res) => {
   const { username } = req.query; // 从查询参数获取用户名
   try {
@@ -530,7 +521,8 @@ app.get("/api/wishlist", async (req, res) => {
   }
 });
 
-// get all ItemId
+// get all ItemIds
+
 // app.get("/api/getItemIds", async (req, res) => {
 //   try {
 //     // 查询所有商品，但只返回 'itemId' 字段
@@ -721,6 +713,43 @@ app.get("/api/postalCodeSearch", async (req, res) => {
 // recommendation
 const natural = require("natural");
 const NGrams = natural.NGrams;
+async function extractKeywords(titles) {
+  const apiKey = "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"; // 替换为你的OpenAI API密钥
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${apiKey}`,
+  };
+  const titlesString = titles.join("\n");
+  const data = {
+    model: "gpt-4",
+    messages: [
+      {
+        role: "system",
+        content:
+          "You will be provided with some items titles in the user wishlist, and your task is to guess the most possible keywords that the user want to search. Just give me the most possible one and the indexes of the titles which contain this keyword. The format of the answer should be: [keyword, indexes]",
+      },
+      {
+        role: "user",
+        content: titlesString,
+      },
+    ],
+    max_tokens: 60,
+  };
+
+  try {
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      data,
+      { headers }
+    );
+    const result = response.data.choices[0].message.content;
+    const [keyword, indexes] = JSON.parse(result); // 假设返回的是 "[\"Apple iPhone 13\", [2, 3, 4]]" 形式的字符串
+    return { keyword, indexes };
+  } catch (error) {
+    console.error("Error calling OpenAI API:", error);
+    throw error;
+  }
+}
 
 app.get("/api/recommendations", async (req, res) => {
   try {
@@ -734,94 +763,79 @@ app.get("/api/recommendations", async (req, res) => {
       return res.status(404).send("user is not existed");
     }
 
-    let allNGrams = [];
-    let keywordItems = [];
     let maxShippingCost = 0; // 初始化最大运费为0
     let hasShippingCost = false; // 初始化是否有运费成本的标志
     let allFreeShipping = true;
     let allPaidShipping = true;
-    user.wishlist.forEach((item) => {
-      const title = item.title[0].toLowerCase();
-      const unigrams = title.split(/\s+/);
-      const bigrams = NGrams.bigrams(title);
-      const trigrams = NGrams.trigrams(title);
-      allNGrams.push(
-        ...unigrams,
-        ...bigrams.map((bigram) => bigram.join(" ")),
-        ...trigrams.map((trigram) => trigram.join(" "))
-      );
-      keywordItems.push(item);
-    });
-
-    const stopWords = new Set([
-      "a",
-      "the",
-      "an",
-      "of",
-      "and",
-      "or",
-      "none",
-      "no",
-      "nor",
-      "-",
-      ".",
-    ]);
-
-    const frequency = {};
-    allNGrams.forEach((ngram) => {
-      if (!stopWords.has(ngram)) {
-        frequency[ngram] = (frequency[ngram] || 0) + 1;
-      }
-    });
-
-    let maxFreq = 0;
     let selectedKeyword = "";
-    Object.entries(frequency).forEach(([key, value]) => {
-      // 更新最大频率的关键字，如果频率相同，则选择最长的关键字
-      if (
-        value > maxFreq ||
-        (value === maxFreq && key.length > selectedKeyword.length)
-      ) {
-        maxFreq = value;
-        selectedKeyword = key;
-      }
-    });
-
+    const titles = user.wishlist.map((item) => item.title[0]);
+    const { keyword, indexes } = await extractKeywords(titles);
+    selectedKeyword = keyword;
+    console.log("current keywords: ", selectedKeyword);
     let maxPrice = 0;
     let minPrice = Number.MAX_SAFE_INTEGER;
-    user.wishlist.forEach((item) => {
-      if (item.title[0].toLowerCase().includes(selectedKeyword)) {
-        const price = parseFloat(
-          item.sellingStatus[0].currentPrice[0].__value__
+    // await user.wishlist.forEach((item) => {
+    //   console.log(item.title[0]);
+    //   if (item.title[0].toLowerCase().includes(selectedKeyword)) {
+    //     const price = parseFloat(
+    //       item.sellingStatus[0].currentPrice[0].__value__
+    //     );
+    //     if (price > maxPrice) maxPrice = price;
+    //     if (price < minPrice) minPrice = price;
+    //     if (
+    //       item.shippingInfo &&
+    //       item.shippingInfo[0].shippingType &&
+    //       item.shippingInfo[0].shippingType.includes("Free")
+    //     ) {
+    //       allPaidShipping = false;
+    //     } else if (
+    //       item.shippingInfo &&
+    //       item.shippingInfo[0].shippingServiceCost &&
+    //       item.shippingInfo[0].shippingServiceCost[0].__value__ !== "0.0"
+    //     ) {
+    //       allFreeShipping = false;
+    //       const shippingCost = parseFloat(
+    //         item.shippingInfo[0].shippingServiceCost[0].__value__
+    //       );
+    //       if (shippingCost > maxShippingCost) {
+    //         maxShippingCost = shippingCost;
+    //       }
+    //     }
+    //   }
+    // });
+    let allAcceptReturns = true;
+    indexes.forEach((index) => {
+      const item = user.wishlist[index];
+      const price = parseFloat(item.sellingStatus[0].currentPrice[0].__value__);
+
+      if (price > maxPrice) maxPrice = price;
+      if (price < minPrice) minPrice = price;
+
+      if (
+        item.shippingInfo &&
+        item.shippingInfo[0].shippingType &&
+        item.shippingInfo[0].shippingType.includes("Free")
+      ) {
+        allPaidShipping = false;
+      } else if (
+        item.shippingInfo &&
+        item.shippingInfo[0].shippingServiceCost &&
+        parseFloat(item.shippingInfo[0].shippingServiceCost[0].__value__) > 0
+      ) {
+        allFreeShipping = false;
+        const shippingCost = parseFloat(
+          item.shippingInfo[0].shippingServiceCost[0].__value__
         );
-        if (price > maxPrice) maxPrice = price;
-        if (price < minPrice) minPrice = price;
-        if (
-          item.shippingInfo &&
-          item.shippingInfo[0].shippingType &&
-          item.shippingInfo[0].shippingType.includes("Free")
-        ) {
-          allPaidShipping = false;
-        } else if (
-          item.shippingInfo &&
-          item.shippingInfo[0].shippingServiceCost &&
-          item.shippingInfo[0].shippingServiceCost[0].__value__ !== "0.0"
-        ) {
-          allFreeShipping = false;
-          const shippingCost = parseFloat(
-            item.shippingInfo[0].shippingServiceCost[0].__value__
-          );
-          if (shippingCost > maxShippingCost) {
-            maxShippingCost = shippingCost;
-          }
-        }
+        if (shippingCost > maxShippingCost) maxShippingCost = shippingCost;
       }
-      console.log(item.shippingInfo.shippingServiceCost);
+      if (item.returnsAccepted[0] === "false") {
+        allAcceptReturns = false;
+      }
     });
 
-    const allAcceptReturns = user.wishlist.every(
-      (item) => item.returnsAccepted[0] === "true"
-    );
+    // const allAcceptReturns = user.wishlist.every(
+    //   (item) => item.returnsAccepted[0] === "true"
+    // );
 
     // update user's portait
     user.recommendationParams = {
@@ -834,10 +848,12 @@ app.get("/api/recommendations", async (req, res) => {
       allPaidShipping,
       allAcceptReturns,
     };
-
+    let maxSubmitPrice = maxPrice * 1.5;
+    let minSubmitPrice = minPrice * 0.5;
+    console.log("min Price:", minSubmitPrice);
+    console.log("max Price", maxSubmitPrice);
     // 保存更新
     await user.save();
-    console.log(user.recommendationParams);
     const params = {
       "OPERATION-NAME": "findItemsAdvanced",
       "SERVICE-VERSION": "1.0.0",
@@ -847,11 +863,11 @@ app.get("/api/recommendations", async (req, res) => {
       keywords: selectedKeyword,
       "paginationInput.entriesPerPage": "300",
       "itemFilter(0).name": "MinPrice",
-      "itemFilter(0).value": minPrice,
+      "itemFilter(0).value": minSubmitPrice,
       "itemFilter(0).paramName": "Currency",
       "itemFilter(0).paramValue": "USD",
       "itemFilter(1).name": "MaxPrice",
-      "itemFilter(1).value": maxPrice,
+      "itemFilter(1).value": maxSubmitPrice,
       "itemFilter(1).paramName": "Currency",
       "itemFilter(1).paramValue": "USD",
     };
@@ -860,13 +876,20 @@ app.get("/api/recommendations", async (req, res) => {
       params["itemFilter(2).name"] = "ReturnsAcceptedOnly";
       params["itemFilter(2).value"] = "true";
     }
+    console.log("Using keyword for search:", selectedKeyword);
 
     const response = await axios.get(
       "https://svcs.ebay.com/services/search/FindingService/v1",
       { params }
     );
-    let items = response.data.findItemsAdvancedResponse[0].searchResult[0].item;
+    console.log(
+      "eBay API full response:",
+      JSON.stringify(response.data, null, 2)
+    );
 
+    console.log(response.data.findItemsAdvancedResponse[0]);
+    let items = response.data.findItemsAdvancedResponse[0].searchResult[0].item;
+    console.log("eBay API response:", response.data);
     // 根据运费过滤
     console.log(hasShippingCost);
     if (allFreeShipping) {
@@ -903,7 +926,10 @@ app.get("/api/recommendations", async (req, res) => {
         return shippingCost <= maxShippingCost;
       });
     }
-
+    const wishlistItemIds = new Set(
+      user.wishlist.map((item) => item.itemId[0])
+    );
+    items = items.filter((item) => !wishlistItemIds.has(item.itemId[0]));
     res.json(items.slice(0, 10));
   } catch (error) {
     console.error("fail to get data", error);
@@ -929,5 +955,171 @@ app.get("/api/recommendationParams", async (req, res) => {
   } catch (error) {
     console.error("fail to get data:", error);
     res.status(500).send("server error");
+  }
+});
+
+// search auctions
+const moment = require("moment");
+app.get("/searchAuctions", async (req, res) => {
+  const { keywords } = req.query;
+
+  // 计算当前时间加5分钟
+  const endTimeLaterThan = moment().add(5, "minutes").toISOString();
+
+  const params = {
+    "OPERATION-NAME": "findItemsAdvanced",
+    "SERVICE-VERSION": "1.0.0",
+    "SECURITY-APPNAME": "JiaweiGu-Jiawei57-PRD-4dd800d9a-8dd1f31c",
+    "RESPONSE-DATA-FORMAT": "JSON",
+    "REST-PAYLOAD": "",
+    keywords: keywords,
+    "paginationInput.entriesPerPage": "50",
+    "itemFilter(0).name": "ListingType",
+    "itemFilter(0).value": "Auction",
+    "itemFilter(1).name": "EndTimeLaterThan",
+    "itemFilter(1).value": endTimeLaterThan, // 设置拍卖剩余时间晚于当前时间5分钟
+  };
+
+  try {
+    const response = await axios.get(
+      "https://svcs.ebay.com/services/search/FindingService/v1",
+      { params }
+    );
+    res.json(
+      response.data.findItemsAdvancedResponse[0].searchResult[0].item || []
+    );
+  } catch (error) {
+    console.error("Error fetching auction items: ", error);
+    res.status(500).json({ message: "Failed to fetch data from eBay." });
+  }
+});
+
+// fetch competed auction items
+// "Apple iPhone 11  128GB  Green Verizon AT&T T-Mobile Unlocked "
+async function fetchSimilarItems(itemId) {
+  const params = new URLSearchParams({
+    "OPERATION-NAME": "getSimilarItems",
+    "SERVICE-NAME": "MerchandisingService",
+    "SERVICE-VERSION": "1.1.0",
+    "CONSUMER-ID": "JiaweiGu-Jiawei57-PRD-4dd800d9a-8dd1f31c", // 使用你的eBay App ID
+    "RESPONSE-DATA-FORMAT": "JSON",
+    "REST-PAYLOAD": "",
+    ListingType: "Chinese",
+    itemId: itemId,
+    maxResults: "100", // 你可以调整这个参数以返回不同数量的结果
+  });
+
+  try {
+    const response = await axios.get(
+      `https://svcs.ebay.com/MerchandisingService?${params.toString()}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching similar items:", error);
+    throw error;
+  }
+}
+
+app.get("/api/fetchSimilarItems/:itemId", async (req, res) => {
+  const itemId = req.params.itemId;
+  if (!itemId) {
+    return res.status(400).json({ error: "Item ID is required" });
+  }
+
+  try {
+    const data = await fetchSimilarItems(itemId);
+    if (
+      data &&
+      data.getSimilarItemsResponse &&
+      data.getSimilarItemsResponse.itemRecommendations &&
+      data.getSimilarItemsResponse.itemRecommendations.item
+    ) {
+      const items = data.getSimilarItemsResponse.itemRecommendations.item;
+      console.log(items);
+      // 初始化数据集合
+      let noBidCountItems = [];
+      let hasBidCountItems = [];
+
+      // 初始化统计变量
+      let totalNoBidCountPrice = 0;
+      let noBidCountItemsCount = 0;
+      let weightedPriceSum = 0;
+      let totalBidCounts = 0;
+
+      // 遍历并处理每个item
+      items.forEach((item) => {
+        const bidCount = item.bidCount ? parseInt(item.bidCount) : -1;
+        const priceValue = item.currentPrice
+          ? parseFloat(item.currentPrice.__value__)
+          : parseFloat(item.buyItNowPrice.__value__);
+        const itemData = {
+          itemId: item.itemId,
+          bidCount: bidCount,
+          price: priceValue,
+        };
+        if (!item.bidCount) {
+          // 没有bidCount的item
+          noBidCountItems.push(itemData);
+          totalNoBidCountPrice += parseFloat(item.buyItNowPrice.__value__);
+          noBidCountItemsCount++;
+        } else {
+          // 有bidCount的item
+          auctionBuyNow = parseFloat(item.buyItNowPrice.__value__);
+          if (auctionBuyNow != 0.0) {
+            totalNoBidCountPrice += auctionBuyNow;
+            noBidCountItemsCount++;
+          }
+          hasBidCountItems.push(itemData);
+          weightedPriceSum += priceValue * bidCount;
+          totalBidCounts += bidCount;
+        }
+      });
+
+      // 计算平均数和加权平均数
+      const averagePriceNoBid =
+        noBidCountItemsCount > 0
+          ? totalNoBidCountPrice / noBidCountItemsCount
+          : 0;
+      const weightedAveragePrice =
+        totalBidCounts > 0 ? weightedPriceSum / totalBidCounts : 0;
+
+      // 去掉一个最高和一个最低价格的项目后计算加权平均价格
+      let revisedWeightedAveragePrice = weightedAveragePrice;
+      if (hasBidCountItems.length > 2) {
+        // 排序并去除最高和最低价格的商品
+        hasBidCountItems.sort((a, b) => a.price - b.price);
+        const trimmedItems = hasBidCountItems.slice(1, -1);
+        const revisedWeightedPriceSum = trimmedItems.reduce(
+          (sum, item) => sum + item.price * item.bidCount,
+          0
+        );
+        const revisedTotalBidCounts = trimmedItems.reduce(
+          (sum, item) => sum + item.bidCount,
+          0
+        );
+        revisedWeightedAveragePrice =
+          revisedTotalBidCounts > 0
+            ? revisedWeightedPriceSum / revisedTotalBidCounts
+            : 0;
+      }
+
+      // 返回结果
+      res.json({
+        totalItems: items.length,
+        noBidCountItems: noBidCountItems,
+        hasBidCountItems: hasBidCountItems,
+        averagePriceNoBid: averagePriceNoBid.toFixed(2),
+        weightedAveragePrice: weightedAveragePrice.toFixed(2),
+        revisedWeightedAveragePrice: revisedWeightedAveragePrice.toFixed(2),
+      });
+    } else {
+      res.status(404).json({ message: "No items found." });
+    }
+  } catch (error) {
+    console.error("Error when fetching similar items", error);
+    res.status(500).json({
+      message: "Failed to fetch similar items",
+      error: error.message,
+    });
   }
 });
