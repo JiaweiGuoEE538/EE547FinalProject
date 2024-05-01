@@ -67,10 +67,6 @@ app.get("/search", async (req, res) => {
     params["buyerPostalCode"] = postalCode;
   }
 
-  // if (maxDistance) {
-  //   params["MaxDistance"] = maxDistance;
-  // }
-
   if (category && category !== "default") {
     // Ensure category is present and not 'default'
     params["categoryId"] = category;
@@ -90,12 +86,14 @@ app.get("/search", async (req, res) => {
   console.log(params);
 
   try {
+    console.log("123");
     const response = await axios.get(
       "https://svcs.ebay.com/services/search/FindingService/v1",
       { params: params }
     );
     console.log(params);
     res.json(response.data);
+    console.log(response.data);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch data from eBay." });
   }
