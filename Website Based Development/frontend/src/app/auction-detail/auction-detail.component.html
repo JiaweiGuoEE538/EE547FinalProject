@@ -47,40 +47,59 @@
     </tbody>
   </table>
   <h2>Distribution</h2>
-  <div *ngIf="priceRangeData['noBidCountItems']">
-    <h3>Items Without Bidding</h3>
-    <table class="table-dark table-striped table-hover">
-      <thead>
-        <tr>
-          <th>Price Range</th>
-          <th>Count</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let range of priceRangeData['noBidCountItems'].ranges">
-          <td>{{ range.range }}</td>
-          <td>{{ range.count }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <!-- Table for Has Bid Count Items -->
-  <div *ngIf="priceRangeData['hasBidCountItems']">
-    <h3>Items With Bidding Process</h3>
-    <table class="table-dark table-striped table-hover">
-      <thead>
-        <tr>
-          <th>Price Range</th>
-          <th>Count</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let range of priceRangeData['hasBidCountItems'].ranges">
-          <td>{{ range.range }}</td>
-          <td>{{ range.count }}</td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- <button class="btn btn-light list-button" (click)="toggleTables()">
+    {{ showTables ? "Hide" : "Show" }}
+  </button> -->
+  <button
+    class="btn btn-light list-button"
+    (click)="toggleTables()"
+    style="display: flex; align-items: center; justify-content: center"
+  >
+    <span
+      class="material-icons"
+      style="vertical-align: middle; margin-right: 8px"
+    >
+      {{ showTables ? "visibility_off" : "visibility" }}
+    </span>
+    {{ showTables ? "Hide" : "Show" }}
+  </button>
+
+  <div *ngIf="showTables">
+    <div *ngIf="priceRangeData['noBidCountItems']">
+      <h3>Items Without Bidding</h3>
+      <table class="table-dark table-striped table-hover">
+        <thead>
+          <tr>
+            <th>Price Range</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let range of priceRangeData['noBidCountItems'].ranges">
+            <td>{{ range.range }}</td>
+            <td>{{ range.count }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- Table for Has Bid Count Items -->
+    <div *ngIf="priceRangeData['hasBidCountItems']">
+      <h3>Items With Bidding Process</h3>
+      <table class="table-dark table-striped table-hover">
+        <thead>
+          <tr>
+            <th>Price Range</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let range of priceRangeData['hasBidCountItems'].ranges">
+            <td>{{ range.range }}</td>
+            <td>{{ range.count }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
   <h2>Prediction</h2>
 

@@ -69,3 +69,9 @@ table td {
 .no-underline:hover {
   text-decoration: underline;
 }
+
+.align-icon-text {
+  display: flex; /* 使用 flex 布局 */
+  align-items: center; /* 垂直居中 */
+  justify-content: center; /* 水平居中 */
+}

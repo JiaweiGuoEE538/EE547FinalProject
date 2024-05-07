@@ -131,14 +131,11 @@ export class DetailsComponent {
     const link = this.itemDetails.Item.ViewItemURLForNaturalSearch;
 
     this.http
-      .post(
-        "https://hw3ebayadvanced.wl.r.appspot.com/api/generateFacebookShareLink",
-        {
-          productName,
-          price,
-          link,
-        }
-      )
+      .post("http://52.8.182.102:3000/api/generateFacebookShareLink", {
+        productName,
+        price,
+        link,
+      })
       .subscribe(
         (response: any) => {
           if (response && response.shareUrl) {
@@ -177,7 +174,7 @@ export class DetailsComponent {
 
     this.http
       .get<string[]>(
-        `http://localhost:3000/api/getItemIds?username=${username}`
+        `http://52.8.182.102:3000/api/getItemIds?username=${username}`
       )
       .subscribe(
         (idsInDatabase) => {

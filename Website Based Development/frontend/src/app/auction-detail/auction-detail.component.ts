@@ -28,6 +28,7 @@ export class AuctionDetailComponent implements OnChanges {
   priceRangeData: PriceRangeData = {};
   indicatedPrice: string | number = "-";
   description: string = "";
+  showTables: boolean = false;
   constructor(
     private auctionService: AuctionService,
     public auctionStateService: AuctionStateService
@@ -161,16 +162,25 @@ export class AuctionDetailComponent implements OnChanges {
       if (highestBid > currentPrice && otherOffer > currentPrice) {
         // common believe value higher than current price
         this.indicatedPrice = ((highestBid + otherOffer) / 2).toFixed(2); // most likely get the price
-        this.description = `Given that the maximum value of the bidding item is ${highestBid} USD which is higher that current price ${currentPrice} USD and the common believe that the item's current value is ${otherOffer} USD which is also higher than current price ${currentPrice} USD, it means that current item has some room for bargin. The final bidding price is likey to be ${this.indicatedPrice} USD`;
+        this.description = `Given that the maximum value of the bidding item is ${highestBid} USD which is higher than current price ${currentPrice} USD and the common believe that the item's current value is ${otherOffer} USD which is also higher than current price ${currentPrice} USD, it means that current item has some room for bargin. The final bidding price is likey to be ${this.indicatedPrice} USD`;
       } else if (highestBid > currentPrice && otherOffer < currentPrice) {
         // common believe value is less than current price
         let upperBound = (currentPrice + highestBid) / 2;
         let lowerBound = Math.max(currentPrice, (highestBid + otherOffer) / 2);
         this.indicatedPrice = Math.max(upperBound, lowerBound).toFixed(2);
-        this.description = `Given that the maximum value of the bidding item is ${highestBid} USD which is higher that current price ${currentPrice} USD, but the common believe that the item's current value is ${otherOffer} USD which is lower than current price ${currentPrice} USD, it means that at this time, this item's value may not worth the money shown on the bidding price. The final bidding price is likey to be ${this.indicatedPrice} USD`;
+        this.description = `Given that the maximum value of the bidding item is ${highestBid} USD which is higher than current price ${currentPrice} USD, but the common believe that the item's current value is ${otherOffer} USD which is lower than current price ${currentPrice} USD, it means that at this time, this item's value may not worth the money shown on the bidding price. The final bidding price is likey to be ${this.indicatedPrice} USD`;
+      } else if (highestBid < otherOffer) {
+        // This auction faces the risk of someone deliberately driving up the bidding price.
+        if (currentPrice > highestBid) {
+          this.indicatedPrice = "-";
+          this.description = `Given that the current bidding price: ${currentPrice} USD is higher than the maximum value of the bidding item: ${highestBid} USD, it means that current price will never worth the value shown on the bidding price. This bid is valueless`;
+        } else {
+          this.indicatedPrice = (currentPrice + highestBid) / 2;
+          this.description = `Given that the current bidding price: ${currentPrice} is lower than the maximum value of the bidding item: ${highestBid} USD, but the "common believe" that the item's current value is ${otherOffer} USD which is higher than the maximum value of the item: ${highestBid}. It means that this auction faces the risk of someone deliberately driving up the bidding price. Please treat this auction carefully! The most likely value of the current item is ${this.indicatedPrice} USD`;
+        }
       } else {
         // the maximum value is less than current price
-        this.description = `Given that the maximum value of the bidding item is ${highestBid} USD which is higher that current price ${currentPrice} USD, it means that current price will never worth the value shown on the bidding price. This bid is valueless`;
+        this.description = `Given that the maximum value of the bidding item is ${highestBid} USD which is lower than current price ${currentPrice} USD, it means that current price will never worth the value shown on the bidding price. This bid is valueless`;
         this.indicatedPrice = "-";
       }
     } else {
@@ -181,5 +191,10 @@ export class AuctionDetailComponent implements OnChanges {
   goToEbay(): void {
     const url = this.auctionStateService.selectedItem.viewItemURL[0];
     window.open(url, "_blank");
+  }
+
+  toggleTables(): void {
+    // 切换 showTables 的值
+    this.showTables = !this.showTables;
   }
 }
