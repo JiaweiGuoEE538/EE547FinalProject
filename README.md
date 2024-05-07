@@ -20,6 +20,7 @@ Besides, platform also aims to enhance interactions with eBay's auction system, 
 To get access to the platform, the developer account is:
 - **username:** Jiawei
 - **password:** 123
+
 You can use this account to play around if you do not want to register.
 
 ### Construction Flow
