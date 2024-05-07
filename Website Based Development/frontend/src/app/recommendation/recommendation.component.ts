@@ -105,7 +105,7 @@ export class RecommendationComponent implements OnInit {
     console.log("get itemId at front!");
     console.log("current object...", this.selectedItemService.selectedItem);
     console.log(this.selectedItemService.selectedItem.itemId);
-    const apiUrl = `https://hw3ebayadvanced.wl.r.appspot.com/getItemDetails/${this.selectedItemService.selectedItem.itemId}`;
+    const apiUrl = `http://52.8.182.102:3000/getItemDetails/${this.selectedItemService.selectedItem.itemId}`;
     this.http.get(apiUrl).subscribe(
       (response) => {
         console.log(response);
@@ -169,7 +169,7 @@ export class RecommendationComponent implements OnInit {
     const username = currentUser.user.username;
     this.http
       .get<string[]>(
-        `http://localhost:3000/api/getItemIds?username=${username}`
+        `http://52.8.182.102:3000/api/getItemIds?username=${username}`
       )
       .subscribe(
         (idsInDatabase) => {

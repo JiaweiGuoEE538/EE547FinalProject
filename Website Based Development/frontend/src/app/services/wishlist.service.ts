@@ -32,13 +32,13 @@ export class WishlistService {
   // }
   getWishlist(username: string): Observable<any> {
     return this.http.get(
-      `http://localhost:3000/api/wishlist?username=${username}`
+      `http://52.8.182.102:3000/api/wishlist?username=${username}`
     );
   }
   // 获取当前心愿单的物品数量
   getWishlistItemCount(username: string): Observable<number> {
     return this.http
-      .get<any>(`http://localhost:3000/api/wishlist?username=${username}`)
+      .get<any>(`http://52.8.182.102:3000/api/wishlist?username=${username}`)
       .pipe(map((items: any) => items.length)); // 假设服务器返回的是物品数组
   }
 
@@ -50,7 +50,7 @@ export class WishlistService {
   // }
   removeFromWishlist(itemId: string, username: string) {
     return this.http
-      .post(`http://localhost:3000/api/removeFromCart`, {
+      .post(`http://52.8.182.102:3000/api/removeFromCart`, {
         itemId: itemId,
         username: username, // 确保发送 username
       })
@@ -59,7 +59,7 @@ export class WishlistService {
 
   addToWishlist(itemData: any, username: string) {
     return this.http
-      .post(`http://localhost:3000/api/addToCart`, {
+      .post(`http://52.8.182.102:3000/api/addToCart`, {
         itemData,
         username,
       })

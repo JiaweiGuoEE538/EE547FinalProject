@@ -111,15 +111,12 @@ export class SearchFormComponent implements OnInit {
         if (!value) {
           return of([]);
         }
-        return this.http.get(
-          `https://hw3ebayadvanced.wl.r.appspot.com/api/postalCodeSearch`,
-          {
-            params: {
-              postalcode_startsWith: value,
-              maxRows: 5,
-            },
-          }
-        );
+        return this.http.get(`http://52.8.182.102:3000/api/postalCodeSearch`, {
+          params: {
+            postalcode_startsWith: value,
+            maxRows: 5,
+          },
+        });
       })
     );
   }
@@ -219,20 +216,18 @@ export class SearchFormComponent implements OnInit {
   sendToBackend(data: any): void {
     const params = new HttpParams({ fromObject: data });
     console.log(params);
-    this.http
-      .get("https://hw3ebayadvanced.wl.r.appspot.com/search", { params })
-      .subscribe(
-        (response) => {
-          console.log("Response from backend:", response);
-          // this.sharedService.clearData(); // clear the old data
-          this.sharedService.updateData(response);
-          this.loadingService.setLoading(false); // 加载完成时调用
-        },
-        (error) => {
-          console.error("Error when communicating with backend:", error);
-          this.loadingService.setLoading(false); // 即使有错误也要停止加载
-        }
-      );
+    this.http.get("http://52.8.182.102:3000/search", { params }).subscribe(
+      (response) => {
+        console.log("Response from backend:", response);
+        // this.sharedService.clearData(); // clear the old data
+        this.sharedService.updateData(response);
+        this.loadingService.setLoading(false); // 加载完成时调用
+      },
+      (error) => {
+        console.error("Error when communicating with backend:", error);
+        this.loadingService.setLoading(false); // 即使有错误也要停止加载
+      }
+    );
   }
 }
 

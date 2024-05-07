@@ -117,7 +117,7 @@ export class ResultTableComponent implements OnInit {
     console.log("get itemId at front!");
     console.log(item.itemId[0]);
     this.loadingService.setLoading(true);
-    const apiUrl = `https://hw3ebayadvanced.wl.r.appspot.com/getItemDetails/${item.itemId[0]}`;
+    const apiUrl = `http://52.8.182.102:3000/getItemDetails/${item.itemId[0]}`;
     this.http.get(apiUrl).subscribe(
       (response) => {
         console.log(response);
@@ -267,7 +267,7 @@ export class ResultTableComponent implements OnInit {
     const username = currentUser.user.username;
     this.http
       .get<string[][]>(
-        `http://localhost:3000/api/getItemIds?username=${username}`
+        `http://52.8.182.102:3000/api/getItemIds?username=${username}`
       )
       .subscribe(
         (nestedIdsInDatabase) => {

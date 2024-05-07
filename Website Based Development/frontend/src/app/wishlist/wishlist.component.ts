@@ -139,7 +139,7 @@ export class WishlistComponent implements OnInit {
     console.log("get itemId at front!");
     console.log("current object...", this.selectedItemService.selectedItem);
     console.log(this.selectedItemService.selectedItem.itemId);
-    const apiUrl = `https://hw3ebayadvanced.wl.r.appspot.com/getItemDetails/${this.selectedItemService.selectedItem.itemId}`;
+    const apiUrl = `http://52.8.182.102:3000/getItemDetails/${this.selectedItemService.selectedItem.itemId}`;
     this.http.get(apiUrl).subscribe(
       (response) => {
         console.log(response);

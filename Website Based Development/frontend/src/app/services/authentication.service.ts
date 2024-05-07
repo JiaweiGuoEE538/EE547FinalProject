@@ -69,7 +69,7 @@ export class AuthenticationService {
 
   login(username: string, password: string): Observable<any> {
     return this.http
-      .post<any>(`http://localhost:3000/login`, { username, password })
+      .post<any>(`http://52.8.182.102:3000/login`, { username, password })
       .pipe(
         map((user) => {
           // store user details and jwt token in session storage to keep user logged in between page refreshes
@@ -84,6 +84,6 @@ export class AuthenticationService {
     // remove user from session storage and set current user to null
     sessionStorage.removeItem("currentUser");
     this.currentUserSubject.next(null);
-    return this.http.post("http://localhost:3000/logout", {});
+    return this.http.post("http://52.8.182.102:3000/logout", {});
   }
 }

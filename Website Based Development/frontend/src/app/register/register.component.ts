@@ -50,7 +50,7 @@ export class RegisterComponent implements AfterViewInit {
     }
 
     const userData = { username: this.username, password: this.password };
-    this.http.post("http://localhost:3000/register", userData).subscribe({
+    this.http.post("http://52.8.182.102:3000/register", userData).subscribe({
       next: (response) => {
         console.log("successfully submitted!", response);
         this.closeModal(); // 成功后关闭模态框

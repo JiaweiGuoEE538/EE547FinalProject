@@ -21,7 +21,7 @@ export class RecommendationService {
       throw new Error("Username is required for recommendations.");
     }
     return this.http.get(
-      `http://localhost:3000/api/recommendations?username=${username}`
+      `http://52.8.182.102:3000/api/recommendations?username=${username}`
     );
   }
   getRecommendationParams(): Observable<any> {
@@ -30,7 +30,7 @@ export class RecommendationService {
       throw new Error("Username is required for recommendations.");
     }
     return this.http.get<any>(
-      `http://localhost:3000/api/recommendationParams?username=${username}`
+      `http://52.8.182.102:3000/api/recommendationParams?username=${username}`
     );
   }
 
@@ -42,7 +42,7 @@ export class RecommendationService {
 
     this.http
       .get<any>(
-        `http://localhost:3000/api/recommendationParams?username=${username}`
+        `http://52.8.182.102:3000/api/recommendationParams?username=${username}`
       )
       .subscribe(
         (params) => {
